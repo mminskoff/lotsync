@@ -1,0 +1,115 @@
+# LotSync Ordered Task List
+
+Cursor must work from this file.
+
+## Current Rule
+
+Complete one task at a time.
+After each task, commit code.
+Do not skip ahead.
+
+## Milestone 1 — Repo and Scaffold
+
+- [ ] Create GitHub repo
+- [ ] Add documentation package
+- [ ] Add Cursor rules
+- [ ] Scaffold FastAPI app
+- [ ] Scaffold Next.js app
+- [ ] Add root README
+- [ ] Add .gitignore
+- [ ] Add .env.example
+- [ ] Confirm frontend runs
+- [ ] Confirm backend health route runs
+
+## Milestone 2 — Supabase
+
+- [ ] Create Supabase project
+- [ ] Add env vars
+- [ ] Run initial schema
+- [ ] Confirm database tables
+- [ ] Add database connection to backend
+- [ ] Add DB health endpoint
+
+## Milestone 3 — Core Backend
+
+- [ ] Dealership model/API
+- [ ] Vehicle model/API
+- [ ] ESL device model/API
+- [ ] Assignment model/API
+- [ ] Inventory source model/API
+- [ ] Sync event model/API
+- [ ] Audit log service
+
+## Milestone 4 — Pairing Workflow
+
+- [ ] Pair VIN to ESL endpoint
+- [ ] Reassign ESL endpoint
+- [ ] Unpair ESL endpoint
+- [ ] Pairing audit logs
+- [ ] Pairing triggers sync event
+- [ ] Pairing tests
+
+## Milestone 5 — Dealer Mobile App
+
+- [ ] Mobile layout
+- [ ] VIN scan/manual entry screen
+- [ ] ESL scan/manual entry screen
+- [ ] Confirm pairing screen
+- [ ] Success screen
+- [ ] Reassign flow
+- [ ] Resync tag button
+- [ ] Unpair button
+
+## Milestone 6 — Dashboard
+
+- [ ] Dashboard shell
+- [ ] Inventory table
+- [ ] Vehicle detail
+- [ ] ESL device table
+- [ ] Pairings page
+- [ ] Sync events page
+- [ ] Price mismatch page
+- [ ] Settings page
+
+## Milestone 7 — Inventory Adapters
+
+- [ ] Define InventoryAdapter
+- [ ] Manual adapter
+- [ ] CSV adapter
+- [ ] JSON adapter
+- [ ] XML adapter
+- [ ] Driveway test adapter
+- [ ] Website verification placeholder
+
+## Milestone 8 — Sync Engine
+
+- [ ] Define LabelPayload
+- [ ] Define DeviceProfile
+- [ ] Generate LabelPayload from vehicle
+- [ ] Define RendererAdapter
+- [ ] Define TransportAdapter
+- [ ] Create sync event worker
+- [ ] Add retry logic
+- [ ] Add failed sync status
+
+## Milestone 9 — Minew Kit
+
+- [ ] Identify models
+- [ ] Confirm NFC/QR
+- [ ] Confirm local API
+- [ ] Confirm local renderer
+- [ ] Confirm gateway LAN IP control
+- [ ] Create MinewLocalRenderer
+- [ ] Create MinewLocalTransport
+- [ ] Push test label
+
+## Milestone 10 — Driveway Validation
+
+- [ ] Create 3 test vehicles
+- [ ] Create 3 test ESL devices
+- [ ] Pair each vehicle
+- [ ] Change price
+- [ ] Confirm tag updates
+- [ ] Reassign tag
+- [ ] Simulate gateway failure
+- [ ] Confirm audit log
