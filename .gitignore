@@ -18,3 +18,15 @@ dist/
 
 # Cursor
 .cursor/index
+
+# Python tooling
+.pytest_cache/
+*.egg-info/
+.coverage
+htmlcov/
+
+# Env variants
+.env.*.local
+
+# Deploy
+.vercel

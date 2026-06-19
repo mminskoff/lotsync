@@ -1,0 +1,33 @@
+---
+description: Next.js frontend conventions for LotSync
+globs: apps/web/**/*
+alwaysApply: false
+---
+
+# Frontend Rules
+
+Stack: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query.
+
+## Apps
+
+- `apps/web` — dealer dashboard and mobile-first PWA for lot staff
+- White-label as LotSync; never expose Minew or other vendor branding in UI
+
+## UI Patterns
+
+Every page needs: loading state, empty state, error state.
+Use shadcn/ui for tables, cards, and forms.
+Connect to the FastAPI backend via env `NEXT_PUBLIC_API_URL`.
+
+## Dashboard Routes (future)
+
+Dashboard, Inventory, ESL Tags, Pairings, Sync Events, Price Mismatches, Inventory Sources, Label Templates, Settings.
+
+## Mobile PWA (future)
+
+Pairing requires two scans: VIN then ESL device code. Show vehicle confirmation before final pair. Do not allow pairing on manual text entry alone unless admin override.
+
+## Security
+
+- Frontend never sends arbitrary `dealership_id` for access control.
+- No provider API credentials in browser code or env vars exposed to client.

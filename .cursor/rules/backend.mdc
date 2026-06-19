@@ -1,0 +1,36 @@
+---
+description: FastAPI backend conventions for LotSync
+globs: apps/api/**/*
+alwaysApply: false
+---
+
+# Backend Rules
+
+Stack: Python, FastAPI, Pydantic. Future: SQLAlchemy or Supabase client, Celery/RQ for jobs.
+
+## Structure
+
+- `routers/` — thin HTTP layer only
+- `services/` — business logic
+- `adapters/` — external systems (inventory sources, ESL providers)
+- `schemas/` — Pydantic request/response models
+- `models/` — database models (when added)
+- `workers/` — async job handlers (when added)
+
+## Patterns
+
+- `VehicleService` and `SyncEngine` produce `LabelPayload` and sync jobs only—they never call Minew or any provider directly.
+- All inventory sources implement `InventoryAdapter` and return `NormalizedVehicle`.
+- All ESL hardware calls go through `RendererAdapter` then `TransportAdapter`.
+- Enforce dealership scope in every service method once auth exists.
+- Add audit logs on every data-changing operation.
+
+## API Conventions
+
+- Base path: `/api/v1` (when versioned routes are added)
+- Health check: `GET /health` returns `{"status": "ok"}`
+- Keep provider credentials server-side only; never expose in responses.
+
+## Tests
+
+Place tests in `app/tests/`. Cover pairing rules and price-update flows when those features land.

@@ -1,0 +1,38 @@
+---
+description: ESL hardware and provider adapter rules
+globs: apps/api/app/adapters/**/*
+alwaysApply: false
+---
+
+# Hardware Rules
+
+Initial hardware target: Minew ESL test kit, white-labeled as LotSync. Minew is an adapter implementation—not a business dependency.
+
+## Adapter Boundaries
+
+```
+ESLService → RendererAdapter → TransportAdapter → Gateway → ESL
+```
+
+Never: `VehicleService → Minew API`
+
+Business logic outputs `LabelPayload` only. Provider-specific rendering and gateway transport stay behind adapters.
+
+## MVP Rendering Path
+
+Phase 1: use Minew local/on-prem renderer if available (`MinewLocalRenderer`).
+Phase 2: build `LotSyncRenderer` for vendor independence.
+Do not write raw e-paper hex streams for MVP unless no local renderer exists.
+
+## MVP Transport Path
+
+Phase 1: `MinewLocalTransport` over gateway LAN API/HTTP/MQTT.
+Minew cloud must not be required for core operation when local APIs are available.
+
+## Dealer-Facing
+
+Dealers buy LotSync hardware kits. Do not surface underlying vendor names in dashboard, mobile app, onboarding, or label templates.
+
+## Future Providers
+
+Minew, Hanshow, SES-imagotag, SoluM—each gets its own renderer and transport adapter. Custom hardware only after demand is proven.

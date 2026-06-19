@@ -1,0 +1,36 @@
+---
+description: LotSync core architecture and adapter boundaries
+alwaysApply: true
+---
+
+# LotSync Architecture
+
+LotSync is a real-time vehicle inventory and pricing sync platform for dealerships. The product is the synchronization layer—not an ESL control panel or vendor reseller platform.
+
+## Data Flow
+
+```
+Inventory Adapter → Normalized Vehicle → Sync Engine → Label Template Engine
+  → LabelPayload → RendererAdapter → TransportAdapter → Gateway → ESL
+```
+
+## Non-Negotiable Rules
+
+1. Do not hardcode Minew or Reynolds & Reynolds into business logic.
+2. Do not assume website HTML is the source of truth; prefer the feed/API that powers the dealer website.
+3. Do not build raw e-paper bitmap generation for MVP.
+4. Do not bypass `RendererAdapter` or `TransportAdapter`.
+5. Every dealer-owned table needs `dealership_id`.
+6. VIN is the primary matching key; stock number is secondary.
+7. Pairing requires VIN + ESL device identification.
+8. Every critical state change must create an audit log.
+
+## Layer Ownership
+
+LotSync owns: inventory integrations, vehicle records, VIN-to-ESL assignments, label templates, sync engine, dashboard, mobile app, audit trail, billing.
+
+Hardware vendors provide: e-paper screens, gateway hardware, radio transport only.
+
+## Before Major Changes
+
+Read `AGENTS.md`, `TASK.md`, `docs/TECH_SPEC.md`, `docs/RENDERING_STRATEGY.md`, and `docs/GATEWAY_TRANSPORT_STRATEGY.md`.

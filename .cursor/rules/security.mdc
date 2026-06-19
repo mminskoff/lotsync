@@ -1,0 +1,34 @@
+---
+description: Multi-tenant security and audit requirements
+globs: apps/**/*
+alwaysApply: false
+---
+
+# Security Rules
+
+Core requirement: Dealer A must never access Dealer B data.
+
+## Data Isolation
+
+- Every dealership-owned table includes `dealership_id`.
+- Backend derives `dealership_id` from authenticated user context.
+- Supabase RLS must enforce dealership isolation when database is added.
+- Support admin access must be explicitly controlled and audit logged.
+
+## Credentials
+
+- Provider API credentials encrypted and stored server-side only.
+- Never commit `.env` or real secrets.
+- Use `.env.example` for documentation only.
+
+## Roles
+
+- `owner` — billing, settings, users
+- `manager` — vehicles, tags, inventory sources
+- `lot_staff` — pair, reassign, unpair tags
+- `viewer` — read-only dashboard
+- `support_admin` — internal LotSync support with full audit logging
+
+## Audit Events
+
+Log: login, vehicle CRUD, price changes, source sync, tag pair/reassign/unpair, manual push, provider failures, permission changes.

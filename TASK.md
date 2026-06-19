@@ -11,15 +11,15 @@ Do not skip ahead.
 ## Milestone 1 — Repo and Scaffold
 
 - [ ] Create GitHub repo
-- [ ] Add documentation package
-- [ ] Add Cursor rules
-- [ ] Scaffold FastAPI app
-- [ ] Scaffold Next.js app
-- [ ] Add root README
-- [ ] Add .gitignore
-- [ ] Add .env.example
-- [ ] Confirm frontend runs
-- [ ] Confirm backend health route runs
+- [x] Add documentation package
+- [x] Add Cursor rules
+- [x] Scaffold FastAPI app
+- [x] Scaffold Next.js app
+- [x] Add root README
+- [x] Add .gitignore
+- [x] Add .env.example
+- [x] Confirm frontend runs
+- [x] Confirm backend health route runs
 
 ## Milestone 2 — Supabase
 
