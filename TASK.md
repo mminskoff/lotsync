@@ -66,13 +66,13 @@ Do not skip ahead.
 
 Mobile-first API — primary consumer will be `apps/mobile` (future); must also work from curl/Postman and interim web PWA.
 
-- [ ] Pair VIN to ESL endpoint
-- [ ] Reassign ESL endpoint
-- [ ] Unpair ESL endpoint
-- [ ] Pairing audit logs
-- [ ] Pairing triggers sync event
-- [ ] Pairing tests
-- [ ] Mobile-friendly response shapes (vehicle + device summary in one payload)
+- [x] Pair VIN to ESL endpoint
+- [x] Reassign ESL endpoint
+- [x] Unpair ESL endpoint
+- [x] Pairing audit logs
+- [x] Pairing triggers sync event
+- [x] Pairing tests
+- [x] Mobile-friendly response shapes (vehicle + device summary in one payload)
 
 ## Milestone 5 — Lot Operations UI (Interim Web PWA)
 

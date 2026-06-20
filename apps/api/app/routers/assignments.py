@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -28,10 +28,12 @@ def get_assignment(
     return assignment_service.get_assignment(db, dealership_id, assignment_id)
 
 
-@router.post("", response_model=AssignmentResponse, status_code=201)
+@router.post("")
 def create_assignment(
     data: AssignmentCreate,
     dealership_id: UUID = Depends(get_dealership_id),
-    db: Session = Depends(get_db),
 ):
-    return assignment_service.create_assignment(db, dealership_id, data)
+    raise HTTPException(
+        status_code=410,
+        detail="Direct assignment creation is deprecated. Use POST /api/v1/pairings instead.",
+    )

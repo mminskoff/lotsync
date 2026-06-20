@@ -22,3 +22,6 @@ class AssignmentResponse(BaseModel):
     assigned_at: datetime
     unassigned_at: datetime | None
     status: str
+    assignment_source: str
+    scan_type: str | None
+    nfc_uid: str | None

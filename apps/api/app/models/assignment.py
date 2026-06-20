@@ -29,3 +29,6 @@ class VehicleESLAssignment(Base):
     )
     unassigned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[str] = mapped_column(Text, nullable=False, default="active")
+    assignment_source: Mapped[str] = mapped_column(Text, nullable=False, default="api")
+    scan_type: Mapped[str | None] = mapped_column(Text)
+    nfc_uid: Mapped[str | None] = mapped_column(Text)

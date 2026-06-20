@@ -10,8 +10,11 @@ CREATE TABLE dealerships (
     slug TEXT NOT NULL UNIQUE,
     website_url TEXT,
     status TEXT NOT NULL DEFAULT 'active',
+    organization_id UUID,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE INDEX idx_dealerships_organization_id ON dealerships (organization_id);
 
 -- users (id aligns with auth.users when Supabase Auth is wired)
 CREATE TABLE users (
@@ -87,7 +90,10 @@ CREATE TABLE vehicle_esl_assignments (
     assigned_by UUID REFERENCES users (id) ON DELETE SET NULL,
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     unassigned_at TIMESTAMPTZ,
-    status TEXT NOT NULL DEFAULT 'active'
+    status TEXT NOT NULL DEFAULT 'active',
+    assignment_source TEXT NOT NULL DEFAULT 'api',
+    scan_type TEXT,
+    nfc_uid TEXT
 );
 
 CREATE INDEX idx_vehicle_esl_assignments_dealership_id ON vehicle_esl_assignments (dealership_id);

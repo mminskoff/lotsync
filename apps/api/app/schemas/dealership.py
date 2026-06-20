@@ -12,6 +12,7 @@ class DealershipResponse(BaseModel):
     slug: str
     website_url: str | None
     status: str
+    organization_id: uuid.UUID | None
     created_at: datetime
 
 
