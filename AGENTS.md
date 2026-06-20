@@ -15,6 +15,16 @@ Inventory Adapter
     -> Gateway
     -> ESL
 
+## Client Architecture
+
+```
+apps/mobile  ──┐
+apps/web     ──┼──> packages/api-client ──> apps/api (/api/v1) ──> Postgres
+               └──> packages/types
+```
+
+Pairing workflow: mobile first. Dashboard reads sync status, mismatches, and audit logs.
+
 ## Non-Negotiable Rules
 
 1. Do not hardcode Minew into business logic.
@@ -28,6 +38,8 @@ Inventory Adapter
 9. Stock number is secondary.
 10. Pairing requires VIN + ESL device identification.
 11. Every critical state change must create an audit log.
+12. Design all API endpoints mobile-compatible (`apps/mobile` is the primary pairing client).
+13. Do not scaffold `apps/mobile` until pairing APIs (Milestone 4) are validated.
 
 ## What LotSync Owns
 
@@ -37,8 +49,9 @@ Inventory Adapter
 - VIN-to-ESL assignments
 - Label templates
 - Sync engine
-- Dealer dashboard
-- Mobile app
+- Dealer dashboard (`apps/web`)
+- Lot operations mobile app (`apps/mobile`, future)
+- Shared packages (`packages/types`, `packages/api-client`, `packages/ui`)
 - Audit trail
 - Billing
 

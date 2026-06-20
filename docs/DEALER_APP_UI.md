@@ -2,12 +2,26 @@
 
 ## Purpose
 
-The dealer mobile app is for lot employees installing, pairing, reassigning, and validating ESL tags.
+The dealer mobile app is for lot employees installing, pairing, reassigning, and validating ESL tags **while walking the lot**. This is the primary operational surface—not the web dashboard.
 
-## MVP Platform
+## Platform Strategy
 
-Build as a responsive web app first using Next.js/PWA.
-Native iOS/Android can come later.
+| Phase | Platform | Location |
+|-------|----------|----------|
+| Interim (M5) | Responsive web PWA | `apps/web` — validates pairing flows before native investment |
+| Production | React Native / Expo | `apps/mobile` — native camera scanning, better offline UX |
+
+Shared code via:
+- `packages/types` — API request/response types
+- `packages/api-client` — HTTP client, auth headers, error handling
+- `packages/ui` — shared tokens/components where practical
+
+All business logic stays in `apps/api`. Mobile is a thin client.
+
+## MVP Platform (Interim)
+
+Build touch-first responsive screens in `apps/web` first.
+Native iOS/Android via `apps/mobile` (Expo) comes after Milestone 4 pairing APIs are validated.
 
 ## Required Screens
 

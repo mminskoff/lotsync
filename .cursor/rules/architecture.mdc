@@ -7,6 +7,17 @@ alwaysApply: true
 
 LotSync is a real-time vehicle inventory and pricing sync platform for dealerships. The product is the synchronization layer—not an ESL control panel or vendor reseller platform.
 
+**Mobile-first:** Lot operations (VIN-to-ESL pairing) happen on phones while walking the lot. Dashboard is for monitoring; mobile is the primary pairing surface.
+
+## Monorepo
+
+```
+apps/api      — FastAPI (shared backend for all clients)
+apps/web      — Next.js dashboard
+apps/mobile   — React Native / Expo (future; do not scaffold until M4 validated)
+packages/types, packages/api-client, packages/ui — shared client code
+```
+
 ## Data Flow
 
 ```
@@ -24,10 +35,12 @@ Inventory Adapter → Normalized Vehicle → Sync Engine → Label Template Engi
 6. VIN is the primary matching key; stock number is secondary.
 7. Pairing requires VIN + ESL device identification.
 8. Every critical state change must create an audit log.
+9. Design all `/api/v1` endpoints mobile-compatible (JSON, lean payloads, no web-only auth).
+10. Do not scaffold `apps/mobile` until pairing APIs are validated.
 
 ## Layer Ownership
 
-LotSync owns: inventory integrations, vehicle records, VIN-to-ESL assignments, label templates, sync engine, dashboard, mobile app, audit trail, billing.
+LotSync owns: inventory integrations, vehicle records, VIN-to-ESL assignments, label templates, sync engine, dashboard, mobile app, shared packages, audit trail, billing.
 
 Hardware vendors provide: e-paper screens, gateway hardware, radio transport only.
 

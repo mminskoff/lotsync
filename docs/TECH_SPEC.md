@@ -1,15 +1,35 @@
 # Technical Specification
 
+## Monorepo & Clients (v5 — Mobile-First)
+
+```
+apps/api          FastAPI — single backend for all clients
+apps/web          Next.js — dashboard, admin, monitoring
+apps/mobile       React Native / Expo — lot operations (future; primary pairing UX)
+packages/types    Shared TypeScript types
+packages/api-client Shared HTTP client
+packages/ui       Shared UI primitives
+```
+
+**Mobile-first principle:** Lot employees pair VIN to ESL tags on phones while walking the lot. The dashboard (`apps/web`) is for monitoring and management—not the primary pairing surface.
+
+Design every `/api/v1` endpoint to work equally well for `apps/mobile`, interim web PWA, and curl. No web-only session assumptions.
+
 ## Stack
 
-Frontend:
+**Lot operations (future `apps/mobile`):**
+- React Native / Expo
+- Expo Camera / barcode scanning
+- Shared `packages/api-client` + `packages/types`
+
+**Dashboard (`apps/web`):**
 - Next.js
 - TypeScript
 - Tailwind CSS
 - shadcn/ui
-- React Query or TanStack Query
+- TanStack Query
 
-Backend:
+**Backend (`apps/api`):**
 - Python
 - FastAPI
 - Pydantic
@@ -28,10 +48,25 @@ Queue:
 - Scheduled polling jobs
 
 Hosting:
-- Frontend: Vercel
-- Backend: Railway or Render
+- Dashboard: Vercel (`apps/web`)
+- Mobile: EAS Build / App Store + Play Store (future `apps/mobile`)
+- Backend: Railway or Render (`apps/api`)
 - Database: Supabase
 - Redis: Upstash/Redis Cloud
+
+## Mobile-Compatible API Design
+
+All clients consume the same FastAPI backend. When building or extending endpoints:
+
+- Use JSON request/response bodies (Pydantic schemas)
+- Prefer composite responses for pairing (vehicle + device + assignment in one payload)
+- Use standard HTTP status codes with `{ "detail": "..." }` errors
+- Auth via Bearer JWT (Supabase Auth) — not cookie-only sessions
+- Support idempotent retries where safe (mobile networks are unreliable)
+- Keep payloads lean for cellular connections
+- Version under `/api/v1`
+
+Mobile-specific convenience routes live under `/api/v1/mobile/*` (scan lookups) but core CRUD remains in `/api/v1/*`.
 
 ## Architecture
 

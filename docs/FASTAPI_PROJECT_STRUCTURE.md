@@ -1,5 +1,8 @@
 # FastAPI Project Structure
 
+All routes under `/api/v1` must be **mobile-compatible** — designed for `apps/mobile` (React Native / Expo), interim web PWA, and dashboard clients.
+
+```
 apps/api/
   app/
     main.py
@@ -8,49 +11,27 @@ apps/api/
       auth.py
       tenancy.py
     models/
-      vehicle.py
-      esl_device.py
-      dealership.py
-      sync_event.py
     schemas/
-      vehicle.py
-      esl_device.py
-      pairing.py
-      inventory.py
     routers/
+      dealerships.py
       vehicles.py
       esl_devices.py
-      pairings.py
+      pairings.py          # mobile-first pairing workflow
+      mobile.py            # scan lookup helpers (/mobile/vehicle-by-vin, etc.)
       inventory_sources.py
       sync_events.py
+      audit_logs.py
     services/
-      vehicle_service.py
-      esl_service.py
-      pairing_service.py
-      sync_engine.py
-      label_renderer.py
-      audit_service.py
     adapters/
-      inventory/
-        base.py
-        csv_adapter.py
-        json_adapter.py
-        xml_adapter.py
-        driveway_adapter.py
-        website_verifier.py
-      esl/
-        base.py
-        minew_provider.py
     workers/
-      tasks.py
-      queue.py
     tests/
-      test_pairing.py
-      test_sync_engine.py
-      test_inventory_adapters.py
+```
+
+Pairing endpoints should return composite payloads (vehicle + device + assignment) suitable for mobile single-screen confirmation.
 
 Important:
 - routers are thin
 - services contain business logic
 - adapters isolate external systems
+- no business logic in clients (`apps/web`, `apps/mobile`)
 - tests cover VIN-to-ESL pairing and price updates

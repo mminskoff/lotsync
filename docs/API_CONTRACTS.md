@@ -1,6 +1,16 @@
 # API Contracts
 
-Base path: /api/v1
+Base path: `/api/v1`
+
+All endpoints must be **mobile-compatible** — consumed by future `apps/mobile` (React Native / Expo), interim web PWA, and dashboard. Use JSON, lean payloads, standard HTTP errors, and Bearer auth (not cookie-only).
+
+## Mobile API Design Principles
+
+- Composite pairing responses: return vehicle + device + assignment in one payload
+- Scan lookup routes under `/mobile/*` for VIN and ESL code resolution
+- Minimize round-trips (pairing flow target: scan → lookup → confirm → pair in ≤3 requests)
+- Clear `{ "detail": "..." }` errors for field staff on unreliable networks
+- No web-only assumptions (HTML redirects, cookie sessions, browser-specific flows)
 
 ## Dealerships
 

@@ -2,6 +2,28 @@
 
 Cursor must work from this file.
 
+## Architecture — Mobile-First (v5)
+
+LotSync is **mobile-first for lot operations**. Employees pair VIN to ESL tags while walking the lot on phones—not from a desktop dashboard.
+
+**Monorepo target:**
+
+```
+apps/api          — FastAPI backend (single source of truth for all clients)
+apps/web          — Next.js dealer dashboard (desktop/tablet; monitoring & admin)
+apps/mobile       — React Native / Expo lot operations app (future; primary pairing UX)
+packages/types    — Shared TypeScript types (API request/response shapes)
+packages/api-client — Shared API client (fetch, auth headers, error handling)
+packages/ui       — Shared UI primitives where web + mobile overlap
+```
+
+**Rules:**
+
+- Design all `/api/v1` endpoints **mobile-compatible** (JSON, minimal round-trips, clear errors, no web-only assumptions).
+- Pairing workflow (`POST /pairings`, reassign, unpair) is consumed by **mobile first**; dashboard is read/monitor.
+- Do **not** scaffold `apps/mobile` until pairing APIs (M4) are validated.
+- Shared packages can be introduced incrementally; start with `packages/types` when web or mobile UI work begins.
+
 ## Current Rule
 
 Complete one task at a time.
@@ -42,16 +64,21 @@ Do not skip ahead.
 
 ## Milestone 4 — Pairing Workflow
 
+Mobile-first API — primary consumer will be `apps/mobile` (future); must also work from curl/Postman and interim web PWA.
+
 - [ ] Pair VIN to ESL endpoint
 - [ ] Reassign ESL endpoint
 - [ ] Unpair ESL endpoint
 - [ ] Pairing audit logs
 - [ ] Pairing triggers sync event
 - [ ] Pairing tests
+- [ ] Mobile-friendly response shapes (vehicle + device summary in one payload)
 
-## Milestone 5 — Dealer Mobile App
+## Milestone 5 — Lot Operations UI (Interim Web PWA)
 
-- [ ] Mobile layout
+Temporary pairing UI in `apps/web` until `apps/mobile` exists. Validates flows before native app investment.
+
+- [ ] Mobile layout (responsive, touch-first)
 - [ ] VIN scan/manual entry screen
 - [ ] ESL scan/manual entry screen
 - [ ] Confirm pairing screen
@@ -60,7 +87,7 @@ Do not skip ahead.
 - [ ] Resync tag button
 - [ ] Unpair button
 
-## Milestone 6 — Dashboard
+## Milestone 6 — Dashboard (Web)
 
 - [ ] Dashboard shell
 - [ ] Inventory table
@@ -113,3 +140,15 @@ Do not skip ahead.
 - [ ] Reassign tag
 - [ ] Simulate gateway failure
 - [ ] Confirm audit log
+
+## Future — Shared Packages & Native Mobile
+
+Do not start until Milestone 4 pairing APIs are validated. Do not scaffold `apps/mobile` in earlier milestones.
+
+- [ ] Create `packages/types` — shared TS types aligned with `/api/v1` schemas
+- [ ] Create `packages/api-client` — shared HTTP client for web + mobile
+- [ ] Create `packages/ui` — shared components/tokens where practical
+- [ ] Scaffold `apps/mobile` (React Native / Expo)
+- [ ] Native VIN + ESL camera scanning
+- [ ] Offline-aware pairing UX (queue requests when signal is weak)
+- [ ] App Store / Play Store pilot build

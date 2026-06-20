@@ -1,33 +1,49 @@
 ---
-description: Next.js frontend conventions for LotSync
-globs: apps/web/**/*
+description: Frontend conventions for LotSync web and mobile clients
+globs: apps/web/**/*,apps/mobile/**/*,packages/**/*
 alwaysApply: false
 ---
 
 # Frontend Rules
 
-Stack: Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, TanStack Query.
+LotSync is mobile-first for lot operations. Pairing happens on phones; dashboard is for monitoring.
 
 ## Apps
 
-- `apps/web` — dealer dashboard and mobile-first PWA for lot staff
-- White-label as LotSync; never expose Minew or other vendor branding in UI
+| App | Stack | Role |
+|-----|-------|------|
+| `apps/web` | Next.js, Tailwind, shadcn/ui, TanStack Query | Dashboard, admin, interim pairing PWA |
+| `apps/mobile` | React Native / Expo (future) | Primary pairing & lot ops UX |
+| `packages/types` | TypeScript | Shared API types |
+| `packages/api-client` | TypeScript | Shared HTTP client |
+| `packages/ui` | React / RN | Shared primitives where overlap exists |
+
+Do not scaffold `apps/mobile` until Milestone 4 pairing APIs are validated.
+
+## Shared API Layer
+
+- All clients call `apps/api` at `/api/v1`
+- Use `packages/api-client` once created; never duplicate business logic in clients
+- Auth via Supabase Bearer token — not cookie-only patterns
+
+## Web Dashboard (`apps/web`)
+
+- Desktop/tablet-first layout for inventory tables, sync monitoring, settings
+- White-label as LotSync; never expose Minew or vendor branding
+
+## Lot Operations UI
+
+- Touch-first, large tap targets, minimal steps
+- Pairing flow: scan VIN → scan ESL → confirm → pair
+- Interim: responsive PWA in `apps/web` (M5)
+- Production: native `apps/mobile` with Expo camera scanning
 
 ## UI Patterns
 
-Every page needs: loading state, empty state, error state.
-Use shadcn/ui for tables, cards, and forms.
-Connect to the FastAPI backend via env `NEXT_PUBLIC_API_URL`.
-
-## Dashboard Routes (future)
-
-Dashboard, Inventory, ESL Tags, Pairings, Sync Events, Price Mismatches, Inventory Sources, Label Templates, Settings.
-
-## Mobile PWA (future)
-
-Pairing requires two scans: VIN then ESL device code. Show vehicle confirmation before final pair. Do not allow pairing on manual text entry alone unless admin override.
+Every screen needs: loading state, empty state, error state.
+Connect via `NEXT_PUBLIC_API_URL` (web) or shared api-client (mobile).
 
 ## Security
 
-- Frontend never sends arbitrary `dealership_id` for access control.
-- No provider API credentials in browser code or env vars exposed to client.
+- Clients never send arbitrary `dealership_id` for access control
+- No provider API credentials in client code

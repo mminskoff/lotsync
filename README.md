@@ -40,7 +40,18 @@ Initial test and MVP hardware target:
 Minew should never be hardcoded into business logic. Minew is an ESL provider adapter.
 
 
-## v4 Architecture Update
+## v5 Architecture — Mobile-First Monorepo
+
+LotSync is **mobile-first for lot operations**. Employees pair VIN to ESL tags on phones while walking the lot.
+
+```
+apps/api      — FastAPI backend (shared API layer)
+apps/web      — Next.js dashboard (monitoring & admin)
+apps/mobile   — React Native / Expo (future; primary pairing UX)
+packages/     — types, api-client, ui (shared across web + mobile)
+```
+
+Design all APIs mobile-compatible. Do not build `apps/mobile` until pairing APIs are validated.
 
 LotSync should own the full software workflow wherever practical.
 

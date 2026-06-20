@@ -2,6 +2,35 @@
 
 This file is the step-by-step build guide for both humans and AI agents.
 
+## Architecture — Mobile-First Monorepo (v5)
+
+LotSync is **mobile-first for lot operations**. VIN-to-ESL pairing happens on phones while walking the lot.
+
+**Target monorepo layout:**
+
+```
+apps/
+  api/      — FastAPI backend (shared by all clients)
+  web/      — Next.js dashboard (monitoring, admin, inventory management)
+  mobile/   — React Native / Expo (future; primary pairing & lot ops UX)
+packages/
+  types/        — Shared TypeScript types (API contracts)
+  api-client/   — Shared API client
+  ui/           — Shared UI primitives (where web + mobile overlap)
+docs/
+.cursor/rules/
+```
+
+**Client roles:**
+
+| App | Role | Primary users |
+|-----|------|----------------|
+| `apps/mobile` | Pair, reassign, unpair, scan VIN/ESL, field sync status | lot_staff |
+| `apps/web` | Dashboard, inventory, alerts, settings, audit | managers, owners |
+| `apps/api` | Business logic, sync engine, audit — **design every endpoint mobile-compatible** | all clients |
+
+Do **not** scaffold `apps/mobile` until Milestone 4 pairing APIs are validated. Milestone 5 uses an interim responsive web PWA in `apps/web` to prove flows before native investment.
+
 ## Rule
 
 Do not start coding random features.
@@ -68,7 +97,9 @@ git remote add origin git@github.com:YOUR_USERNAME/lotsync.git
 Create base folders:
 
 ```bash
-mkdir -p apps/api apps/web packages/shared docs .cursor/rules
+mkdir -p apps/api apps/web docs .cursor/rules
+mkdir -p packages/types packages/api-client packages/ui   # scaffold when UI work starts
+# apps/mobile — add later (React Native / Expo), after pairing APIs validated
 ```
 
 Copy all Markdown docs into `/docs` or repo root as specified.
@@ -240,14 +271,24 @@ Build in order:
 
 Do not build Minew integration yet.
 
-## Phase 8 — VIN-to-ESL Pairing
+## Phase 8 — VIN-to-ESL Pairing (Mobile-First API)
 
-Build:
+Primary consumer: future `apps/mobile` (React Native / Expo). Interim consumer: responsive PWA in `apps/web`.
 
-- `POST /pairings`
-- `POST /pairings/reassign`
-- `DELETE /pairings/{id}`
-- `GET /vehicles/{vin}/assignment`
+Build mobile-compatible endpoints:
+
+- `POST /api/v1/pairings`
+- `POST /api/v1/pairings/reassign`
+- `DELETE /api/v1/pairings/{id}`
+- `GET /api/v1/vehicles/{vin}/assignment`
+- `GET /api/v1/mobile/vehicle-by-vin/{vin}` (lookup after scan)
+- `GET /api/v1/mobile/device-by-code/{code}` (lookup after scan)
+
+API design rules for mobile:
+- Return vehicle + device + assignment summary in pairing responses (minimize round-trips)
+- Use clear HTTP status codes and JSON error bodies
+- Avoid cookie-only or web-only auth patterns
+- Support camera scan → lookup → confirm → pair in ≤3 requests
 
 Rules:
 - one active tag per vehicle
@@ -255,12 +296,12 @@ Rules:
 - audit every pairing
 - trigger sync event after pairing
 
-## Phase 9 — Dealer Mobile UI
+## Phase 9 — Lot Operations UI (Interim Web PWA)
 
-Build mobile-first PWA screens:
+Build touch-first responsive screens in `apps/web` until `apps/mobile` exists:
 
 1. Login placeholder
-2. Scan VIN
+2. Scan VIN (manual entry first; camera later)
 3. Scan ESL QR
 4. Confirm pairing
 5. Pairing success
@@ -268,11 +309,21 @@ Build mobile-first PWA screens:
 7. Resync tag
 8. Unpair tag
 
-For scanning:
-Use placeholder manual entry first.
-Then add camera scanning.
+Use shared API via `packages/api-client` once packages exist; until then call `NEXT_PUBLIC_API_URL` directly.
 
-## Phase 10 — Dashboard UI
+## Phase 9b — Native Mobile App (Future)
+
+Scaffold `apps/mobile` with React Native / Expo **after** pairing APIs are validated in Phase 8/9.
+
+1. Create `packages/types` from `/api/v1` contracts
+2. Create `packages/api-client`
+3. Scaffold Expo app with camera permissions for VIN/QR scanning
+4. Implement pairing flow using same endpoints as web PWA
+5. Pilot on iOS/Android with lot staff
+
+Do not duplicate business logic in the mobile app—all logic stays in `apps/api`.
+
+## Phase 10 — Dashboard UI (Web)
 
 Build pages:
 
