@@ -10,7 +10,7 @@ Do not skip ahead.
 
 ## Milestone 1 — Repo and Scaffold
 
-- [ ] Create GitHub repo
+- [x] Create GitHub repo
 - [x] Add documentation package
 - [x] Add Cursor rules
 - [x] Scaffold FastAPI app
@@ -23,12 +23,12 @@ Do not skip ahead.
 
 ## Milestone 2 — Supabase
 
-- [ ] Create Supabase project
-- [ ] Add env vars
-- [ ] Run initial schema
-- [ ] Confirm database tables
-- [ ] Add database connection to backend
-- [ ] Add DB health endpoint
+- [x] Create Supabase project
+- [x] Add env vars
+- [x] Run initial schema
+- [x] Confirm database tables
+- [x] Add database connection to backend
+- [x] Add DB health endpoint
 
 ## Milestone 3 — Core Backend
 
