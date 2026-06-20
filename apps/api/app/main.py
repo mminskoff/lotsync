@@ -1,9 +1,13 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
+import app.models  # noqa: F401 — register ORM models for SQLAlchemy metadata
 from app.core.database import check_db_connection
+from app.routers import api_router
 
 app = FastAPI(title="LotSync API", version="0.1.0")
+
+app.include_router(api_router)
 
 
 @app.get("/health")

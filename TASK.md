@@ -32,13 +32,13 @@ Do not skip ahead.
 
 ## Milestone 3 — Core Backend
 
-- [ ] Dealership model/API
-- [ ] Vehicle model/API
-- [ ] ESL device model/API
-- [ ] Assignment model/API
-- [ ] Inventory source model/API
-- [ ] Sync event model/API
-- [ ] Audit log service
+- [x] Dealership model/API
+- [x] Vehicle model/API
+- [x] ESL device model/API
+- [x] Assignment model/API
+- [x] Inventory source model/API
+- [x] Sync event model/API
+- [x] Audit log service
 
 ## Milestone 4 — Pairing Workflow
 
