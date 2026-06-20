@@ -31,6 +31,7 @@ class Vehicle(Base):
     source_type: Mapped[str | None] = mapped_column(Text)
     source_url: Mapped[str | None] = mapped_column(Text)
     vehicle_url: Mapped[str | None] = mapped_column(Text)
+    image_url: Mapped[str | None] = mapped_column(Text)
     last_source_update_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_website_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     price_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

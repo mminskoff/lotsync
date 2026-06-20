@@ -21,6 +21,7 @@ class VehicleCreate(BaseModel):
     source_type: str | None = None
     source_url: str | None = None
     vehicle_url: str | None = None
+    image_url: str | None = None
     sync_status: str | None = None
 
 
@@ -39,6 +40,7 @@ class VehicleUpdate(BaseModel):
     source_type: str | None = None
     source_url: str | None = None
     vehicle_url: str | None = None
+    image_url: str | None = None
     price_verified: bool | None = None
     sync_status: str | None = None
 
@@ -63,6 +65,7 @@ class VehicleResponse(BaseModel):
     source_type: str | None
     source_url: str | None
     vehicle_url: str | None
+    image_url: str | None
     price_verified: bool
     sync_status: str | None
     created_at: datetime

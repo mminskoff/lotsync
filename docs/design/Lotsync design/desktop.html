@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LotSync — Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/desktop.css">
+</head>
+<body>
+
+<header class="site-top">
+  <a class="brand" href="index.html"><span class="logo-mark"></span> LotSync</a>
+  <nav class="tb-links">
+    <a href="index.html">Overview</a>
+    <a href="design-system.html">Design System</a>
+    <a href="mobile-pairing.html">Mobile</a>
+    <a href="desktop.html" class="active">Desktop</a>
+  </nav>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="rooftop">
+      <div class="rt-ic"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l9-6 9 6v12M9 21v-6h6v6"/></svg></div>
+      <div><div class="rt-name">Premier Auto Group</div><div class="rt-sub">6 rooftops · All</div></div>
+      <span class="rt-chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></span>
+    </div>
+
+    <div class="side-group">Overview</div>
+    <div class="nav-item active" data-view="dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</div>
+
+    <div class="side-group">Manage</div>
+    <div class="nav-item" data-view="vehicles"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13M5 13h14v4H5zM7 17v1M17 17v1"/></svg> Vehicles</div>
+    <div class="nav-item" data-view="devices"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12V4h8l9 9-7 7-9-9z"/><circle cx="7.5" cy="7.5" r="1"/></svg> ESL Devices</div>
+    <div class="nav-item" data-view="assignments"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg> Assignments</div>
+
+    <div class="side-group">Monitor</div>
+    <div class="nav-item" data-view="audit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3v4h4M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM9 13l2 2 4-4"/></svg> Audit Log</div>
+    <div class="nav-item" data-view="sync"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg> Sync Events <span class="ni-badge">5</span></div>
+
+    <div class="side-group">Insights</div>
+    <div class="nav-item" data-view="reports"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M8 15v3M13 10v8M18 6v12"/></svg> Reports</div>
+
+    <div class="side-foot">
+      <div class="nav-item" data-view="settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5L19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5L19 5"/></svg> Settings</div>
+      <div class="side-user">
+        <span class="avatar">DA</span>
+        <div><div class="su-name">Dana Reyes</div><div class="su-role">Sales Manager</div></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="main-top">
+      <div class="mt-title" id="mtTitle">Dashboard</div>
+      <div class="mt-search search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input class="input" placeholder="Search VIN, stock #, or tag…"></div>
+      <button class="btn btn-secondary btn-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></button>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <section class="page-view active" id="view-dashboard">
+        <div class="view-head">
+          <div><h2>Dashboard</h2><p>Live picture of inventory, labels, and sync health across all rooftops.</p></div>
+          <div class="view-actions">
+            <div class="seg"><button class="on">7 days</button><button>30 days</button><button>Quarter</button></div>
+            <button class="btn btn-secondary">Export</button>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="card stat"><div class="stat-label">Vehicles in sync</div><div class="stat-value">1,284</div><div class="stat-delta delta-up">▲ 2.4% <span class="muted" style="font-weight:400">vs last week</span></div></div>
+          <div class="card stat"><div class="stat-label">Pending syncs</div><div class="stat-value">37</div><div class="stat-delta delta-up">▼ 12 <span class="muted" style="font-weight:400">last hour</span></div></div>
+          <div class="card stat"><div class="stat-label">Failed syncs</div><div class="stat-value">5</div><div class="stat-delta delta-down">▲ 2 <span class="muted" style="font-weight:400">needs attention</span></div></div>
+          <div class="card stat"><div class="stat-label">Tags online</div><div class="stat-value">1,326<span class="muted" style="font-size:16px;font-weight:400"> / 1,340</span></div><div class="stat-delta delta-up">99% reachable</div></div>
+        </div>
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-head"><div><div class="card-title">Sync activity</div></div><span class="badge badge-outline">Updates pushed / day</span></div>
+            <div class="card-pad">
+              <div class="bars" id="dashBars"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">Label coverage</div></div>
+            <div class="card-pad">
+              <div class="donut" style="background:conic-gradient(var(--green-500) 0 95.8%, var(--neutral-200) 95.8% 100%)"><div class="hole"><div class="dv">95.8%</div><div class="dl">of inventory</div></div></div>
+              <div class="legend">
+                <div class="lg"><span class="sw" style="background:var(--green-500)"></span>Tagged &amp; synced<span class="lv">1,284</span></div>
+                <div class="lg"><span class="sw" style="background:var(--neutral-200)"></span>Untagged<span class="lv">56</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-grid" style="margin-top:16px">
+          <div class="card">
+            <div class="card-head"><div class="card-title">Needs attention</div><a class="btn btn-ghost btn-sm" data-jump="sync">View all →</a></div>
+            <div class="table-wrap"><table class="tbl"><thead><tr><th>Vehicle</th><th>Tag</th><th>Issue</th><th>Status</th></tr></thead><tbody id="attnRows"></tbody></table></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">Recent activity</div></div>
+            <div class="card-pad" style="padding-top:6px" id="dashFeed"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VEHICLES -->
+      <section class="page-view" id="view-vehicles">
+        <div class="view-head">
+          <div><h2>Vehicles</h2><p>Every unit across your rooftops and its label status.</p></div>
+          <div class="view-actions"><button class="btn btn-secondary">Import from DMS</button><button class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Add vehicle</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="search" style="width:280px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input class="input" placeholder="Search vehicles…"></div>
+          <span class="filter-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg>Status</span>
+          <span class="filter-pill on">Sync: All</span>
+          <span class="filter-pill">Rooftop</span>
+          <div class="spacer"></div>
+          <div class="seg"><button class="on">Table</button><button>Grid</button></div>
+        </div>
+        <div class="card" style="overflow:hidden">
+          <div class="table-wrap"><table class="tbl"><thead><tr><th style="width:18px"><span class="checkbox"></span></th><th>Vehicle</th><th>VIN</th><th>Stock</th><th class="num">Price</th><th>ESL Tag</th><th>Sync</th><th>Updated</th><th></th></tr></thead><tbody id="vehRows"></tbody></table></div>
+        </div>
+        <div class="pager"><div>Showing 1–8 of 1,340 vehicles</div><div class="pg-btns"><button class="btn btn-secondary btn-sm">Previous</button><button class="btn btn-secondary btn-sm">Next</button></div></div>
+      </section>
+
+      <!-- ESL DEVICES -->
+      <section class="page-view" id="view-devices">
+        <div class="view-head">
+          <div><h2>ESL Devices</h2><p>Hardware fleet — battery, signal, and pairing per tag.</p></div>
+          <div class="view-actions"><button class="btn btn-secondary">Bulk import</button><button class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Register tag</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="search" style="width:280px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input class="input" placeholder="Search tags…"></div>
+          <span class="filter-pill on">Status: All</span>
+          <span class="filter-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg>Battery</span>
+          <span class="filter-pill">Model</span>
+        </div>
+        <div class="card" style="overflow:hidden">
+          <div class="table-wrap"><table class="tbl"><thead><tr><th style="width:18px"><span class="checkbox"></span></th><th>Tag ID</th><th>Model</th><th>Paired vehicle</th><th>Battery</th><th>Signal</th><th>Last seen</th><th>Status</th></tr></thead><tbody id="devRows"></tbody></table></div>
+        </div>
+        <div class="pager"><div>Showing 1–8 of 1,340 tags</div><div class="pg-btns"><button class="btn btn-secondary btn-sm">Previous</button><button class="btn btn-secondary btn-sm">Next</button></div></div>
+      </section>
+
+      <!-- ASSIGNMENTS -->
+      <section class="page-view" id="view-assignments">
+        <div class="view-head">
+          <div><h2>Assignments</h2><p>Manage the vehicle ↔ tag bindings. Reassign or unpair without leaving the desk.</p></div>
+          <div class="view-actions"><button class="btn btn-secondary">Unpair</button><button class="btn btn-primary">Reassign tag</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="search" style="width:280px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input class="input" placeholder="Search assignments…"></div>
+          <span class="filter-pill on">Active</span>
+          <span class="filter-pill">Source</span>
+          <span class="filter-pill">Assigned by</span>
+        </div>
+        <div class="card" style="overflow:hidden">
+          <div class="table-wrap"><table class="tbl"><thead><tr><th style="width:18px"><span class="checkbox"></span></th><th>Vehicle</th><th>ESL Tag</th><th>Assigned by</th><th>When</th><th>Source</th><th>Status</th><th></th></tr></thead><tbody id="asgRows"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- AUDIT LOG -->
+      <section class="page-view" id="view-audit">
+        <div class="view-head">
+          <div><h2>Audit Log</h2><p>Immutable record of every change for compliance and dispute resolution.</p></div>
+          <div class="view-actions"><button class="btn btn-secondary">Export CSV</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="search" style="width:280px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input class="input" placeholder="Search log…"></div>
+          <span class="filter-pill">Actor</span>
+          <span class="filter-pill">Action</span>
+          <span class="filter-pill"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Last 7 days</span>
+        </div>
+        <div class="card" style="overflow:hidden">
+          <div class="table-wrap"><table class="tbl"><thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Entity</th><th>Change</th><th>Source</th></tr></thead><tbody id="audRows"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- SYNC EVENTS -->
+      <section class="page-view" id="view-sync">
+        <div class="view-head">
+          <div><h2>Sync Events</h2><p>Real-time stream of label updates and their outcomes.</p></div>
+          <div class="view-actions"><span class="status-chip" style="background:var(--surface)"><span class="dot" style="width:7px;height:7px;border-radius:50%;background:var(--status-synced);box-shadow:0 0 0 3px var(--status-synced-bg)"></span>Live</span><button class="btn btn-secondary">Retry failed</button></div>
+        </div>
+        <div class="toolbar">
+          <div class="seg" id="syncSeg"><button class="on" data-f="all">All</button><button data-f="pending">Pending</button><button data-f="failed">Failed</button></div>
+          <span class="filter-pill">Type</span>
+          <div class="spacer"></div>
+          <span class="muted" style="font-size:13px">Avg latency <strong class="mono" style="color:var(--foreground)">1.2s</strong></span>
+        </div>
+        <div class="card" style="overflow:hidden" id="syncTableCard">
+          <div class="table-wrap"><table class="tbl"><thead><tr><th>Event</th><th>Tag</th><th>Type</th><th>Result</th><th class="num">Latency</th><th class="num">Retries</th><th>Time</th></tr></thead><tbody id="syncRows"></tbody></table></div>
+        </div>
+        <div class="card" id="syncEmpty" style="display:none">
+          <div class="empty">
+            <div class="e-ic"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6L9 17l-5-5"/></svg></div>
+            <h3>No failed syncs</h3>
+            <p>Every label is up to date. Failed events will appear here so you can retry them in one click.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section class="page-view" id="view-reports">
+        <div class="view-head">
+          <div><h2>Reports</h2><p>Dealer-group performance across all six rooftops.</p></div>
+          <div class="view-actions"><div class="seg"><button>Month</button><button class="on">Quarter</button><button>Year</button></div><button class="btn btn-secondary">Export</button></div>
+        </div>
+        <div class="stats">
+          <div class="card stat"><div class="stat-label">Rooftops</div><div class="stat-value">6</div><div class="stat-delta muted" style="font-weight:400">3,910 vehicles</div></div>
+          <div class="card stat"><div class="stat-label">Group coverage</div><div class="stat-value">95.8%</div><div class="stat-delta delta-up">▲ 4.1 pts</div></div>
+          <div class="card stat"><div class="stat-label">Avg pair time</div><div class="stat-value">7.4<span class="muted" style="font-size:16px;font-weight:400">s</span></div><div class="stat-delta delta-up">▼ 1.1s · under target</div></div>
+          <div class="card stat"><div class="stat-label">Sync success</div><div class="stat-value">99.2%</div><div class="stat-delta delta-up">▲ 0.3 pts</div></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-head"><div class="card-title">Sync success by rooftop</div><span class="badge badge-outline">This quarter</span></div>
+          <div class="card-pad"><div class="bars" id="repBars"></div></div>
+        </div>
+        <div class="card" style="overflow:hidden">
+          <div class="card-head"><div class="card-title">Rooftop breakdown</div></div>
+          <div class="table-wrap"><table class="tbl"><thead><tr><th>Rooftop</th><th class="num">Vehicles</th><th class="num">Tags deployed</th><th class="num">Coverage</th><th class="num">Avg pair</th><th class="num">Sync success</th></tr></thead><tbody id="repRows"></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="page-view" id="view-settings">
+        <div class="view-head"><div><h2>Settings</h2><p>Configure your dealer group, hardware, and integrations.</p></div></div>
+        <div class="set-layout">
+          <nav class="set-nav">
+            <a class="active">General</a>
+            <a>Rooftops</a>
+            <a>Hardware</a>
+            <a>Integrations</a>
+            <a>Team &amp; roles</a>
+            <a>Notifications</a>
+          </nav>
+          <div class="card card-pad">
+            <div class="set-row">
+              <div><div class="sr-label">Dealer group name</div><div class="sr-desc">Appears on labels, reports, and exports.</div></div>
+              <input class="input" value="Premier Auto Group">
+            </div>
+            <div class="set-row">
+              <div><div class="sr-label">Default currency</div><div class="sr-desc">Used for all price syncs unless a rooftop overrides it.</div></div>
+              <select class="select"><option>USD ($)</option><option>CAD ($)</option><option>EUR (€)</option></select>
+            </div>
+            <div class="set-row">
+              <div><div class="sr-label">Price rounding</div><div class="sr-desc">How prices render on ESL labels.</div></div>
+              <select class="select"><option>Whole dollar — $28,950</option><option>Cents — $28,950.00</option><option>Ends in 9 — $28,949</option></select>
+            </div>
+            <div class="set-row">
+              <div><div class="sr-label">Auto-sync on change</div><div class="sr-desc">Push updates to labels the moment inventory changes in your DMS.</div></div>
+              <div style="display:flex;align-items:center;gap:12px"><div class="toggle"></div><span class="muted" style="font-size:13px">Enabled</span></div>
+            </div>
+            <div class="set-row">
+              <div><div class="sr-label">Offline queueing</div><div class="sr-desc">Let attendants keep pairing in dead zones; sync resumes on reconnect.</div></div>
+              <div style="display:flex;align-items:center;gap:12px"><div class="toggle"></div><span class="muted" style="font-size:13px">Enabled</span></div>
+            </div>
+            <div class="set-row">
+              <div><div class="sr-label">Low-battery alert</div><div class="sr-desc">Notify when a tag drops below this threshold.</div></div>
+              <div style="display:flex;align-items:center;gap:12px"><div class="toggle off"></div><select class="select" style="width:120px"><option>15%</option><option>20%</option><option>30%</option></select></div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px"><button class="btn btn-ghost">Cancel</button><button class="btn btn-primary">Save changes</button></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script src="desktop-data.js"></script>
+</body>
+</html>

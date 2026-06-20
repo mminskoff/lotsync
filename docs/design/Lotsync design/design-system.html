@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LotSync — Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/app.css">
+<style>
+  body { background: var(--surface); }
+  .layout { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+
+  /* doc sidebar */
+  .doc-side { position: sticky; top: 0; height: 100vh; border-right: 1px solid var(--border); padding: 22px 16px; overflow-y: auto; }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 16px; letter-spacing: -0.02em; padding: 0 8px 18px; }
+  .logo-mark { width: 28px; height: 28px; border-radius: 8px; background: var(--primary); position: relative; flex-shrink: 0; }
+  .logo-mark::before { content:""; position:absolute; left:6px; right:6px; top:8px; height: 4px; border-radius: 3px; background: #fff; opacity:.95; }
+  .logo-mark::after { content:""; position:absolute; left:6px; top:15px; width: 10px; height: 4px; border-radius: 3px; background: #fff; opacity:.6; }
+  .side-group { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--neutral-400); font-weight: 600; padding: 16px 8px 6px; }
+  .side-link { display: block; padding: 7px 8px; border-radius: 7px; font-size: var(--text-base); color: var(--neutral-600); }
+  .side-link:hover { background: var(--neutral-100); color: var(--foreground); }
+  .side-link.active { background: var(--green-50); color: var(--green-800); font-weight: 500; }
+  .side-back { display:flex; align-items:center; gap:8px; font-size:var(--text-sm); color:var(--muted-foreground); padding: 0 8px 14px; }
+
+  .doc-main { padding: 48px 56px 96px; max-width: 1000px; }
+  .doc-head h1 { font-size: var(--text-3xl); font-weight: 600; letter-spacing: -0.025em; }
+  .doc-head p { color: var(--muted-foreground); margin-top: 10px; font-size: var(--text-md); max-width: 64ch; }
+
+  .block { margin-top: 56px; scroll-margin-top: 24px; }
+  .block-head { margin-bottom: 20px; }
+  .block-head h2 { font-size: var(--text-xl); font-weight: 600; letter-spacing: -0.02em; }
+  .block-head p { color: var(--muted-foreground); font-size: var(--text-sm); margin-top: 4px; }
+
+  .demo { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; background: var(--neutral-50); }
+  .demo.col { flex-direction: column; align-items: stretch; }
+  .demo.plain { background: var(--surface); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+
+  .tokrow { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-top: 1px solid var(--border); }
+  .tokrow:first-child { border-top: none; }
+  .tok-swatch { width: 40px; height: 40px; border-radius: 8px; border: 1px solid var(--border); flex-shrink: 0; }
+  .tok-name { font-family: var(--font-mono); font-size: var(--text-sm); width: 220px; }
+  .tok-val { font-family: var(--font-mono); font-size: var(--text-sm); color: var(--muted-foreground); }
+
+  .radius-demo { display:flex; gap: 20px; }
+  .radius-demo .r { flex:1; text-align:center; }
+  .radius-demo .r div { height: 64px; background: var(--green-50); border: 1.5px solid var(--green-300); margin-bottom: 8px; }
+  .radius-demo .r span { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--muted-foreground); }
+
+  .shadow-demo { display:grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
+  .shadow-demo .s { height: 80px; background:#fff; border-radius: var(--radius); display:flex; align-items:flex-end; justify-content:center; padding-bottom:8px; font-family:var(--font-mono); font-size:11px; color:var(--muted-foreground); }
+
+  /* nav demos */
+  .bottomnav { display:flex; background:#fff; border:1px solid var(--border); border-radius: 18px; padding: 8px; box-shadow: var(--shadow-md); max-width: 360px; }
+  .bn-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; padding: 8px; border-radius: 12px; font-size: 11px; color: var(--neutral-500); }
+  .bn-item.active { color: var(--green-700); background: var(--green-50); font-weight:500; }
+  .mini-side { width: 230px; background: var(--neutral-950); border-radius: var(--radius-lg); padding: 14px; }
+  .ms-link { display:flex; align-items:center; gap:10px; padding: 9px 11px; border-radius: 8px; color: #9BA6A1; font-size: var(--text-base); }
+  .ms-link.active { background: rgba(255,255,255,0.08); color: #fff; }
+  .ms-link svg { opacity:.8; }
+
+  @media (max-width: 860px){ .layout { grid-template-columns: 1fr; } .doc-side { display:none; } .doc-main { padding: 32px 24px; } .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="doc-side">
+    <div class="brand"><span class="logo-mark"></span> LotSync</div>
+    <a class="side-back" href="index.html"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Overview</a>
+    <div class="side-group">Foundations</div>
+    <a class="side-link" href="#colors">Color</a>
+    <a class="side-link" href="#type">Typography</a>
+    <a class="side-link" href="#tokens">Tokens</a>
+    <div class="side-group">Components</div>
+    <a class="side-link" href="#buttons">Buttons</a>
+    <a class="side-link" href="#inputs">Inputs</a>
+    <a class="side-link" href="#badges">Badges</a>
+    <a class="side-link" href="#cards">Cards</a>
+    <a class="side-link" href="#tables">Tables</a>
+    <a class="side-link" href="#alerts">Alerts</a>
+    <a class="side-link" href="#dialog">Dialogs</a>
+    <a class="side-link" href="#nav">Navigation</a>
+  </aside>
+
+  <main class="doc-main">
+    <div class="doc-head">
+      <h1>Design System</h1>
+      <p>Deliverable 5. Every component is built on the token layer in <span class="mono">tokens.css</span> and named to map directly onto shadcn/ui + Radix primitives with Tailwind. Drop the tokens into your <span class="mono">globals.css</span> and the rest follows.</p>
+    </div>
+
+    <!-- COLORS -->
+    <section class="block" id="colors">
+      <div class="block-head"><h2>Color</h2><p>Semantic tokens resolve to the Lot Green and neutral scales.</p></div>
+      <div class="grid-2">
+        <div>
+          <div class="tokrow"><div class="tok-swatch" style="background:var(--primary)"></div><div class="tok-name">--primary</div><div class="tok-val">#0E9466</div></div>
+          <div class="tokrow"><div class="tok-swatch" style="background:var(--green-700)"></div><div class="tok-name">--primary-hover</div><div class="tok-val">#0B7553</div></div>
+          <div class="tokrow"><div class="tok-swatch" style="background:var(--accent)"></div><div class="tok-name">--accent</div><div class="tok-val">#ECFDF3</div></div>
+          <div class="tokrow"><div class="tok-swatch" style="background:var(--foreground)"></div><div class="tok-name">--foreground</div><div class="tok-val">#141917</div></div>
+        </div>
+        <div>
+          <div class="tokrow"><div class="tok-swatch" style="background:var(--muted-foreground)"></div><div class="tok-name">--muted-foreground</div><div class="tok-val">#6B7771</div></div>
+          <div class="tokrow"><div class="tok-swatch" style="background:var(--border)"></div><div class="tok-name">--border</div><div class="tok-val">#E2E7E5</div></div>
+          <div class="tokrow"><div class="tok-swatch" style="background:var(--app-bg)"></div><div class="tok-name">--app-bg</div><div class="tok-val">#F7F9F8</div></div>
+          <div class="tokrow"><div class="tok-swatch" style="background:var(--destructive)"></div><div class="tok-name">--destructive</div><div class="tok-val">#C9372C</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TYPE -->
+    <section class="block" id="type">
+      <div class="block-head"><h2>Typography</h2><p>Geist for UI, Geist Mono for data. Tabular figures on by default in tables.</p></div>
+      <div class="demo col plain">
+        <div style="font-size:36px;font-weight:600;letter-spacing:-0.03em">The quick brown fox</div>
+        <div style="font-size:22px;font-weight:600;letter-spacing:-0.02em">Heading — inventory overview</div>
+        <div style="font-size:16px;color:var(--neutral-600);max-width:60ch">Body copy at 16px stays comfortable for desk reading, while UI defaults to 14px for density.</div>
+        <div class="mono" style="font-size:15px;font-weight:500">VIN 1HGCM82633A004352 · ESL-4471 · $28,950 · 09:41</div>
+      </div>
+    </section>
+
+    <!-- TOKENS -->
+    <section class="block" id="tokens">
+      <div class="block-head"><h2>Radius, spacing &amp; elevation</h2><p>10px base radius. A restrained, low-spread shadow ramp.</p></div>
+      <div class="radius-demo" style="margin-bottom:28px">
+        <div class="r"><div style="border-radius:6px"></div><span>sm · 6px</span></div>
+        <div class="r"><div style="border-radius:10px"></div><span>base · 10px</span></div>
+        <div class="r"><div style="border-radius:14px"></div><span>lg · 14px</span></div>
+        <div class="r"><div style="border-radius:20px"></div><span>xl · 20px</span></div>
+        <div class="r"><div style="border-radius:999px"></div><span>full</span></div>
+      </div>
+      <div class="shadow-demo">
+        <div class="s" style="box-shadow:var(--shadow-xs)">xs</div>
+        <div class="s" style="box-shadow:var(--shadow-sm)">sm</div>
+        <div class="s" style="box-shadow:var(--shadow-md)">md</div>
+        <div class="s" style="box-shadow:var(--shadow-lg)">lg</div>
+      </div>
+    </section>
+
+    <!-- BUTTONS -->
+    <section class="block" id="buttons">
+      <div class="block-head"><h2>Buttons</h2><p>Primary, secondary, ghost, destructive. Three sizes plus icon-only.</p></div>
+      <div class="demo">
+        <button class="btn btn-primary">Pair vehicle</button>
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-ghost">Skip</button>
+        <button class="btn btn-destructive">Unpair</button>
+        <button class="btn btn-primary" disabled>Disabled</button>
+      </div>
+      <div class="demo" style="margin-top:16px">
+        <button class="btn btn-primary btn-lg">Large CTA</button>
+        <button class="btn btn-primary">Default</button>
+        <button class="btn btn-secondary btn-sm">Small</button>
+        <button class="btn btn-secondary btn-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+    </section>
+
+    <!-- INPUTS -->
+    <section class="block" id="inputs">
+      <div class="block-head"><h2>Inputs</h2><p>Text, search, select, and grouped fields with leading icons.</p></div>
+      <div class="demo plain"><div class="grid-2" style="width:100%">
+        <div class="field"><label class="label">VIN</label><input class="input mono" placeholder="Enter 17-digit VIN" value="1HGCM82633A004352"></div>
+        <div class="field"><label class="label">Status</label><select class="select"><option>Available</option><option>In transit</option><option>Sold</option></select></div>
+        <div class="field"><label class="label">Search inventory</label><div class="search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input class="input" placeholder="VIN, stock #, or tag"></div></div>
+        <div class="field"><label class="label">Price</label><div class="input-group"><span class="ic-lead">$</span><input class="input mono" value="28,950"></div><span class="input-hint">Pushes to paired ESL on save.</span></div>
+      </div></div>
+    </section>
+
+    <!-- BADGES -->
+    <section class="block" id="badges">
+      <div class="block-head"><h2>Badges</h2><p>Status is the spine of this product. Dot + label, always paired.</p></div>
+      <div class="demo">
+        <span class="badge badge-synced"><span class="dot"></span>Synced</span>
+        <span class="badge badge-pending"><span class="dot"></span>Pending</span>
+        <span class="badge badge-failed"><span class="dot"></span>Failed</span>
+        <span class="badge badge-offline"><span class="dot"></span>Offline</span>
+        <span class="badge badge-info"><span class="dot"></span>Queued</span>
+        <span class="badge badge-outline">Available</span>
+        <span class="badge badge-outline">Unpaired</span>
+      </div>
+    </section>
+
+    <!-- CARDS -->
+    <section class="block" id="cards">
+      <div class="block-head"><h2>Cards</h2><p>Surface container, stat card, and card with header.</p></div>
+      <div class="grid-3">
+        <div class="card stat">
+          <div class="stat-label">Vehicles in sync</div>
+          <div class="stat-value">1,284</div>
+          <div class="stat-delta delta-up">▲ 2.4% <span class="muted" style="font-weight:400">vs last week</span></div>
+        </div>
+        <div class="card stat">
+          <div class="stat-label">Pending syncs</div>
+          <div class="stat-value">37</div>
+          <div class="stat-delta delta-down">▼ 12 <span class="muted" style="font-weight:400">last hour</span></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Tag battery</div><span class="badge badge-synced"><span class="dot"></span>Healthy</span></div>
+          <div class="card-pad"><div class="muted" style="font-size:13px">98% of tags above 40%. 3 tags need replacement this month.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TABLES -->
+    <section class="block" id="tables">
+      <div class="block-head"><h2>Tables</h2><p>Dense, scannable, mono for identifiers and numbers.</p></div>
+      <div class="card" style="overflow:hidden">
+        <div class="table-wrap"><table class="tbl">
+          <thead><tr><th>Vehicle</th><th>VIN</th><th>ESL Tag</th><th class="num">Price</th><th>Sync</th></tr></thead>
+          <tbody>
+            <tr><td class="cell-strong">2023 Honda Accord</td><td class="mono cell-muted">1HGCM82633A004352</td><td class="mono">ESL-4471</td><td class="num">$28,950</td><td><span class="badge badge-synced"><span class="dot"></span>Synced</span></td></tr>
+            <tr><td class="cell-strong">2022 Toyota RAV4</td><td class="mono cell-muted">2T3W1RFV8MC112233</td><td class="mono">ESL-3920</td><td class="num">$31,400</td><td><span class="badge badge-pending"><span class="dot"></span>Pending</span></td></tr>
+            <tr><td class="cell-strong">2024 Ford F-150</td><td class="mono cell-muted">1FTFW1E84MFA09876</td><td class="mono">ESL-5102</td><td class="num">$52,300</td><td><span class="badge badge-failed"><span class="dot"></span>Failed</span></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- ALERTS -->
+    <section class="block" id="alerts">
+      <div class="block-head"><h2>Alerts</h2><p>Inline feedback for the four operational states.</p></div>
+      <div class="demo col plain">
+        <div class="alert alert-success"><span class="alert-ic">✓</span><div><div class="alert-title">Pair complete</div><div class="alert-body">ESL-4471 now mirrors this vehicle. Updates push automatically.</div></div></div>
+        <div class="alert alert-warn"><span class="alert-ic">!</span><div><div class="alert-title">Tag already assigned</div><div class="alert-body">ESL-4471 is paired to a 2021 Civic. Reassigning will unpair it.</div></div></div>
+        <div class="alert alert-error"><span class="alert-ic">×</span><div><div class="alert-title">Sync failed</div><div class="alert-body">Tag did not acknowledge the update. Retry or check tag battery.</div></div></div>
+        <div class="alert alert-info"><span class="alert-ic">i</span><div><div class="alert-title">Working offline</div><div class="alert-body">3 pairings are queued and will sync when you reconnect.</div></div></div>
+      </div>
+    </section>
+
+    <!-- DIALOG -->
+    <section class="block" id="dialog">
+      <div class="block-head"><h2>Dialog</h2><p>Confirmation and destructive flows. Built on Radix Dialog.</p></div>
+      <div class="demo plain" style="position:relative; min-height:300px; padding:0; overflow:hidden; border-radius:var(--radius-lg)">
+        <div style="position:absolute;inset:0;background:var(--neutral-100)"></div>
+        <div class="dialog-overlay" style="position:absolute">
+          <div class="dialog">
+            <div class="dialog-body">
+              <div style="width:42px;height:42px;border-radius:11px;background:var(--status-pending-bg);color:var(--status-pending);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px">!</div>
+              <div style="font-size:18px;font-weight:600;letter-spacing:-0.01em">Reassign ESL-4471?</div>
+              <p class="muted" style="font-size:14px;margin-top:6px">This tag is currently paired to a <strong style="color:var(--foreground);font-weight:500">2021 Honda Civic</strong>. Reassigning unpairs it and the Civic will show no price until re-tagged.</p>
+            </div>
+            <div class="dialog-foot">
+              <button class="btn btn-secondary">Cancel</button>
+              <button class="btn btn-destructive">Reassign tag</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NAV -->
+    <section class="block" id="nav">
+      <div class="block-head"><h2>Navigation</h2><p>Desktop sidebar (dark) and mobile bottom nav.</p></div>
+      <div class="grid-2" style="align-items:start">
+        <div class="mini-side">
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 11px 14px;color:#fff;font-weight:600"><span class="logo-mark" style="width:24px;height:24px"></span> LotSync</div>
+          <a class="ms-link active"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</a>
+          <a class="ms-link"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13M5 13h14v4H5z"/></svg> Vehicles</a>
+          <a class="ms-link"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12V4h8l9 9-7 7-9-9z"/></svg> ESL Devices</a>
+          <a class="ms-link"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 6h13M8 12h13M8 18h13"/></svg> Assignments</a>
+        </div>
+        <div style="display:flex;justify-content:center;padding-top:40px">
+          <div class="bottomnav">
+            <a class="bn-item active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 7H6a3 3 0 0 0 0 6h3M15 7h3a3 3 0 0 1 0 6h-3M8 10h8"/></svg>Pair</a>
+            <a class="bn-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Lookup</a>
+            <a class="bn-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"/></svg>History</a>
+            <a class="bn-item"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5L19 19M3 12h2M19 12h2"/></svg>Settings</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+  const links = document.querySelectorAll('.side-link');
+  const blocks = [...document.querySelectorAll('.block')];
+  const obs = new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ links.forEach(l=>l.classList.toggle('active', l.getAttribute('href')==='#'+e.target.id)); }});
+  }, {rootMargin:'-20% 0px -70% 0px'});
+  blocks.forEach(b=>obs.observe(b));
+</script>
+</body>
+</html>

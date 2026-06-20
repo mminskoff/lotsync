@@ -25,6 +25,7 @@ class VehiclePairingSummary(BaseModel):
     displayed_price: Decimal | None
     status: str | None
     sync_status: str | None
+    image_url: str | None = None
 
 
 class ESLDevicePairingSummary(BaseModel):

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LotSync — Product Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/app.css">
+<style>
+  body { background: var(--surface); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+
+  /* topbar */
+  .topbar { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,0.82); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+  .topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 600; font-size: 17px; letter-spacing: -0.02em; }
+  .logo-mark { width: 30px; height: 30px; border-radius: 9px; background: var(--primary); position: relative; box-shadow: var(--shadow-sm); flex-shrink: 0; }
+  .logo-mark::before { content:""; position:absolute; left:6px; right:6px; top:9px; height: 4.5px; border-radius: 3px; background: #fff; opacity:.95; }
+  .logo-mark::after { content:""; position:absolute; left:6px; top:17px; width: 11px; height: 4.5px; border-radius: 3px; background: #fff; opacity:.6; }
+  .nav-links { display: flex; gap: 4px; }
+  .nav-links a { padding: 8px 12px; border-radius: 8px; font-size: var(--text-base); color: var(--neutral-600); font-weight: 500; }
+  .nav-links a:hover { background: var(--neutral-100); color: var(--foreground); }
+
+  /* hero */
+  .hero { padding: 84px 0 64px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: var(--text-sm); font-weight: 500; color: var(--green-700); background: var(--green-50); border: 1px solid var(--green-100); padding: 5px 12px; border-radius: 999px; }
+  .hero h1 { font-size: clamp(2.6rem, 6vw, 4.2rem); font-weight: 600; letter-spacing: -0.035em; line-height: 1.04; margin: 22px 0 0; max-width: 16ch; }
+  .hero h1 em { font-style: normal; color: var(--primary); }
+  .hero p.lede { font-size: var(--text-lg); color: var(--muted-foreground); max-width: 56ch; margin-top: 22px; line-height: 1.5; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 36px; }
+  .hero-meta .m-val { font-size: var(--text-2xl); font-weight: 600; letter-spacing: -0.02em; }
+  .hero-meta .m-lab { font-size: var(--text-sm); color: var(--muted-foreground); margin-top: 2px; }
+
+  /* deliverable cards */
+  .deck { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 8px; }
+  .dcard { display: block; padding: 24px; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--surface); transition: border-color .15s, box-shadow .15s, transform .15s; }
+  .dcard:hover { border-color: var(--green-300); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .dcard .dc-ic { width: 42px; height: 42px; border-radius: 11px; background: var(--green-50); color: var(--green-700); display: flex; align-items: center; justify-content: center; margin-bottom: 16px; }
+  .dcard h3 { font-size: var(--text-md); font-weight: 600; letter-spacing: -0.01em; display: flex; align-items: center; justify-content: space-between; }
+  .dcard p { font-size: var(--text-sm); color: var(--muted-foreground); margin-top: 6px; line-height: 1.5; }
+  .dcard .arr { color: var(--neutral-300); transition: transform .15s, color .15s; }
+  .dcard:hover .arr { color: var(--green-600); transform: translateX(3px); }
+
+  /* section */
+  .section { padding: 64px 0; border-top: 1px solid var(--border); }
+  .sec-head { margin-bottom: 36px; }
+  .sec-kicker { font-size: var(--text-sm); font-weight: 600; color: var(--primary); text-transform: uppercase; letter-spacing: 0.06em; }
+  .sec-head h2 { font-size: var(--text-3xl); font-weight: 600; letter-spacing: -0.025em; margin-top: 10px; }
+  .sec-head p { color: var(--muted-foreground); margin-top: 10px; max-width: 60ch; font-size: var(--text-md); }
+
+  /* color palette */
+  .swatch-row { display: grid; grid-template-columns: repeat(11, 1fr); gap: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  .swatch { height: 72px; display: flex; align-items: flex-end; padding: 7px; }
+  .swatch span { font-family: var(--font-mono); font-size: 10px; }
+  .scale-label { font-size: var(--text-sm); font-weight: 600; margin: 24px 0 10px; display: flex; gap: 10px; align-items: baseline; }
+  .scale-label .mono { color: var(--muted-foreground); font-weight: 400; font-size: var(--text-xs); }
+
+  .status-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 28px; }
+  .status-tile { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  .status-tile .badge { margin-bottom: 12px; }
+  .status-tile .st-name { font-size: var(--text-sm); font-weight: 500; }
+  .status-tile .st-hex { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--muted-foreground); margin-top: 2px; }
+
+  /* type specimen */
+  .type-grid { display: grid; grid-template-columns: 200px 1fr; gap: 0; }
+  .type-row { display: contents; }
+  .type-row > div { padding: 20px 0; border-top: 1px solid var(--border); }
+  .type-meta { color: var(--muted-foreground); font-size: var(--text-sm); }
+  .type-meta .mono { display: block; margin-top: 4px; font-size: 11px; }
+
+  /* sitemap */
+  .sitemap { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .map-col { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .map-col-head { padding: 16px 20px; background: var(--neutral-50); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .map-col-head .badge { margin-left: auto; }
+  .map-body { padding: 8px; }
+  .map-node { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: var(--text-base); }
+  .map-node:hover { background: var(--neutral-50); }
+  .map-node .mn-ic { color: var(--neutral-400); display: flex; }
+  .map-node.child { margin-left: 26px; font-size: var(--text-sm); color: var(--neutral-600); }
+  .map-node .mn-tag { margin-left: auto; font-size: var(--text-xs); color: var(--neutral-400); font-family: var(--font-mono); }
+
+  footer { padding: 48px 0 64px; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: var(--text-sm); display: flex; justify-content: space-between; align-items: center; }
+
+  @media (max-width: 880px) {
+    .deck { grid-template-columns: 1fr; }
+    .sitemap { grid-template-columns: 1fr; }
+    .status-grid { grid-template-columns: repeat(2,1fr); }
+    .type-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .swatch span { font-size: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="logo-mark"></span> LotSync</div>
+    <nav class="nav-links">
+      <a href="#brand">Brand</a>
+      <a href="#sitemap">Sitemap</a>
+      <a href="design-system.html">Design System</a>
+      <a href="mobile-pairing.html">Mobile</a>
+      <a href="desktop.html">Desktop</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <span class="eyebrow"><span class="dot" style="width:6px;height:6px;border-radius:50%;background:var(--green-500)"></span> Electronic Shelf Labels for the modern lot</span>
+      <h1>Every vehicle, <em>perfectly priced</em> — automatically.</h1>
+      <p class="lede">LotSync pairs vehicles to ESL tags in seconds and keeps price, status, and inventory in sync across every rooftop. Designed for the lot, the desk, and the boardroom.</p>
+      <div class="hero-meta">
+        <div><div class="m-val">&lt;10s</div><div class="m-lab">Pair time, one-handed</div></div>
+        <div><div class="m-val">3</div><div class="m-lab">Personas, 1 system</div></div>
+        <div><div class="m-val">18</div><div class="m-lab">Screens designed</div></div>
+        <div><div class="m-val">shadcn</div><div class="m-lab">Token-ready handoff</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-bottom:64px">
+    <div class="deck">
+      <a class="dcard" href="design-system.html">
+        <div class="dc-ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="14.5" r="2.5"/><circle cx="6" cy="11" r="3"/><path d="M3 21h18"/></svg>
+        </div>
+        <h3>Design System <span class="arr">→</span></h3>
+        <p>Brand, color, type, tokens and the full component library. Mapped to shadcn/ui + Tailwind.</p>
+      </a>
+      <a class="dcard" href="mobile-pairing.html">
+        <div class="dc-ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+        </div>
+        <h3>Mobile Pairing <span class="arr">→</span></h3>
+        <p>The 10-screen lot-attendant flow: scan VIN, scan ESL, confirm, plus offline and error states.</p>
+      </a>
+      <a class="dcard" href="desktop.html">
+        <div class="dc-ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <h3>Desktop SaaS <span class="arr">→</span></h3>
+        <p>Dashboard, Vehicles, ESL Devices, Assignments, Audit Log, Sync Events, Reporting & Settings.</p>
+      </a>
+    </div>
+  </section>
+
+  <!-- BRAND -->
+  <section class="section" id="brand">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-kicker">Deliverable 4 — Visual Direction</div>
+        <h2>A fresher, brighter green</h2>
+        <p>The old forest greens (<span class="mono">#1F4D3A</span>, <span class="mono">#102A20</span>) read heavy and dated. Lot Green keeps the outdoor, operational feel but lifts it — confident, legible in direct sun, premium without being corporate. No blue primary.</p>
+      </div>
+
+      <div class="scale-label">Lot Green <span class="mono">--primary: green-600</span></div>
+      <div class="swatch-row" id="greenScale"></div>
+
+      <div class="scale-label">Neutral — green-tinted slate <span class="mono">--neutral</span></div>
+      <div class="swatch-row" id="neutralScale"></div>
+
+      <div class="scale-label" style="margin-top:36px">Operational status</div>
+      <div class="status-grid">
+        <div class="status-tile"><span class="badge badge-synced"><span class="dot"></span>Synced</span><div class="st-name">In sync</div><div class="st-hex">#0E9466</div></div>
+        <div class="status-tile"><span class="badge badge-pending"><span class="dot"></span>Pending</span><div class="st-name">Sync queued</div><div class="st-hex">#B8770A</div></div>
+        <div class="status-tile"><span class="badge badge-failed"><span class="dot"></span>Failed</span><div class="st-name">Sync error</div><div class="st-hex">#C9372C</div></div>
+        <div class="status-tile"><span class="badge badge-offline"><span class="dot"></span>Offline</span><div class="st-name">Tag unreachable</div><div class="st-hex">#6B7771</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TYPE -->
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-kicker">Typography</div>
+        <h2>Geist &amp; Geist Mono</h2>
+        <p>A precise geometric grotesque for UI, paired with a monospace for the data that defines this product — VINs, tag IDs, prices, and timestamps. Tabular figures keep tables aligned.</p>
+      </div>
+      <div class="type-grid">
+        <div class="type-row"><div class="type-meta">Display<span class="mono">Geist 600 · 48/1.04</span></div><div style="font-size:48px;font-weight:600;letter-spacing:-0.03em;line-height:1.04">Pair vehicle in seconds</div></div>
+        <div class="type-row"><div class="type-meta">Heading<span class="mono">Geist 600 · 28</span></div><div style="font-size:28px;font-weight:600;letter-spacing:-0.02em">Inventory overview</div></div>
+        <div class="type-row"><div class="type-meta">Body<span class="mono">Geist 400 · 16/1.55</span></div><div style="font-size:16px;max-width:48ch;color:var(--neutral-600)">Keep price, status, and inventory in sync across every rooftop without anyone touching a printer.</div></div>
+        <div class="type-row"><div class="type-meta">Mono / data<span class="mono">Geist Mono 500 · 16</span></div><div class="mono" style="font-size:16px;font-weight:500">1HGCM82633A004352 · ESL-4471 · $28,950</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SITEMAP -->
+  <section class="section" id="sitemap">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="sec-kicker">Deliverable 1 — Information Architecture</div>
+        <h2>Product sitemap</h2>
+        <p>Two surfaces, one source of truth. The mobile app is built for speed on the lot; the desktop SaaS is built for visibility and control at the desk.</p>
+      </div>
+      <div class="sitemap">
+        <div class="map-col">
+          <div class="map-col-head">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+            Mobile App <span class="badge badge-outline">Lot Attendant</span>
+          </div>
+          <div class="map-body" id="mapMobile"></div>
+        </div>
+        <div class="map-col">
+          <div class="map-col-head">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8"/></svg>
+            Desktop SaaS <span class="badge badge-outline">Manager · Principal</span>
+          </div>
+          <div class="map-body" id="mapDesktop"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <div>LotSync — Product Design Exploration</div>
+    <div>Geist · Lot Green · shadcn-ready tokens</div>
+  </footer>
+</main>
+
+<script>
+  const greens = [['50','#ECFDF3'],['100','#D3F8E0'],['200','#AAF0C7'],['300','#72E3A6'],['400','#38CD86'],['500','#15B374'],['600','#0E9466'],['700','#0B7553'],['800','#0C5E45'],['900','#0B4D3A'],['950','#042F24']];
+  const neutrals = [['0','#FFFFFF'],['50','#F7F9F8'],['100','#EFF2F1'],['200','#E2E7E5'],['300','#CDD4D1'],['400','#9BA6A1'],['500','#6B7771'],['600','#4D5853'],['700','#3A433F'],['800','#232A27'],['900','#141917']];
+  function fill(id, arr){
+    document.getElementById(id).innerHTML = arr.map(([k,v])=>{
+      const light = parseInt(k) >= 400 || id==='greenScale' && parseInt(k)>=500;
+      const dark = (id==='neutralScale' ? parseInt(k)>=400 : parseInt(k)>=500);
+      return `<div class="swatch" style="background:${v};color:${dark?'#fff':'var(--neutral-500)'}"><span>${k}</span></div>`;
+    }).join('');
+  }
+  fill('greenScale', greens); fill('neutralScale', neutrals);
+
+  const ico = {
+    pair:'<path d="M9 7H6a3 3 0 0 0 0 6h3M15 7h3a3 3 0 0 1 0 6h-3M8 10h8"/>',
+    car:'<path d="M5 13l1.5-4.5A2 2 0 0 1 8.4 7h7.2a2 2 0 0 1 1.9 1.5L19 13M5 13h14v4H5zM7 17v1M17 17v1"/>',
+    hist:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 4v4h4"/>',
+    gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M5 5l1.5 1.5M17.5 17.5L19 19M3 12h2M19 12h2M5 19l1.5-1.5M17.5 6.5L19 5"/>',
+    grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+    tag:'<path d="M3 12V4h8l9 9-7 7-9-9z"/><circle cx="7.5" cy="7.5" r="1"/>',
+    list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+    audit:'<path d="M14 3v4h4M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM9 13l2 2 4-4"/>',
+    bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+    chart:'<path d="M3 3v18h18M8 15v3M13 10v8M18 6v12"/>'
+  };
+  function nodes(id, arr){
+    document.getElementById(id).innerHTML = arr.map(n=>{
+      const cls = n.child ? 'map-node child':'map-node';
+      const ic = n.child ? '<span class="mn-ic"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>'
+        : `<span class="mn-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ico[n.ic]||''}</svg></span>`;
+      return `<div class="${cls}">${ic}<span>${n.t}</span>${n.tag?`<span class="mn-tag">${n.tag}</span>`:''}</div>`;
+    }).join('');
+  }
+  nodes('mapMobile', [
+    {ic:'pair', t:'Pairing', tag:'core'},
+    {child:true, t:'Scan VIN → Vehicle Found'},
+    {child:true, t:'Scan ESL → Confirm → Success'},
+    {child:true, t:'Reassign / Unpair'},
+    {ic:'car', t:'Vehicle Lookup'},
+    {ic:'hist', t:'Assignment History'},
+    {ic:'gear', t:'Settings'},
+  ]);
+  nodes('mapDesktop', [
+    {ic:'grid', t:'Dashboard'},
+    {ic:'car', t:'Vehicles'},
+    {ic:'tag', t:'ESL Devices'},
+    {ic:'list', t:'Assignments'},
+    {ic:'audit', t:'Audit Log'},
+    {ic:'bolt', t:'Sync Events'},
+    {ic:'chart', t:'Reports', tag:'group'},
+    {ic:'gear', t:'Settings'},
+  ]);
+</script>
+</body>
+</html>

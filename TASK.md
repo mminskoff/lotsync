@@ -78,14 +78,14 @@ Mobile-first API — primary consumer will be `apps/mobile` (future); must also 
 
 Temporary pairing UI in `apps/web` until `apps/mobile` exists. Validates flows before native app investment.
 
-- [ ] Mobile layout (responsive, touch-first)
-- [ ] VIN scan/manual entry screen
-- [ ] ESL scan/manual entry screen
-- [ ] Confirm pairing screen
-- [ ] Success screen
-- [ ] Reassign flow
-- [ ] Resync tag button
-- [ ] Unpair button
+- [x] Mobile layout (responsive, touch-first)
+- [x] VIN scan/manual entry screen
+- [x] ESL scan/manual entry screen
+- [x] Confirm pairing screen
+- [x] Success screen
+- [x] Reassign flow
+- [x] Resync tag button
+- [x] Unpair button
 
 ## Milestone 6 — Dashboard (Web)
 

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LotSync">
+  <rect width="512" height="512" rx="112" fill="#0E9466"/>
+  <path
+    fill="#fff"
+    d="M148 168h216c22 0 40 18 40 40v96c0 22-18 40-40 40H148c-22 0-40-18-40-40v-96c0-22 18-40 40-40zm40 56v80h136v-80H188zm48 112h40v32h-40v-32z"
+  />
+</svg>
