@@ -4,6 +4,7 @@ from app.models.base import Base
 from app.models.dealership import Dealership
 from app.models.esl_device import ESLDevice
 from app.models.inventory_source import InventorySource
+from app.models.inventory_sync_run import InventorySyncRun
 from app.models.sync_event import SyncEvent
 from app.models.user import User
 from app.models.vehicle import Vehicle
@@ -16,6 +17,7 @@ __all__ = [
     "ESLDevice",
     "VehicleESLAssignment",
     "InventorySource",
+    "InventorySyncRun",
     "SyncEvent",
     "AuditLog",
 ]

@@ -9,8 +9,11 @@ from app.schemas.inventory import (
     InventorySourceCreate,
     InventorySourceResponse,
     InventorySourceUpdate,
+    InventorySyncResult,
+    InventorySyncRunResponse,
+    InventoryTestResult,
 )
-from app.services import inventory_source_service
+from app.services import inventory_source_service, inventory_sync_service
 
 router = APIRouter(prefix="/inventory-sources", tags=["inventory-sources"])
 
@@ -40,3 +43,30 @@ def update_inventory_source(
     db: Session = Depends(get_db),
 ):
     return inventory_source_service.update_inventory_source(db, dealership_id, source_id, data)
+
+
+@router.post("/{source_id}/test", response_model=InventoryTestResult)
+def test_inventory_source(
+    source_id: UUID,
+    dealership_id: UUID = Depends(get_dealership_id),
+    db: Session = Depends(get_db),
+):
+    return inventory_sync_service.test_inventory_source(db, dealership_id, source_id)
+
+
+@router.post("/{source_id}/sync-now", response_model=InventorySyncResult)
+def sync_inventory_source(
+    source_id: UUID,
+    dealership_id: UUID = Depends(get_dealership_id),
+    db: Session = Depends(get_db),
+):
+    return inventory_sync_service.sync_inventory_source_now(db, dealership_id, source_id)
+
+
+@router.get("/{source_id}/sync-runs", response_model=list[InventorySyncRunResponse])
+def list_inventory_sync_runs(
+    source_id: UUID,
+    dealership_id: UUID = Depends(get_dealership_id),
+    db: Session = Depends(get_db),
+):
+    return inventory_sync_service.list_sync_runs(db, dealership_id, source_id)

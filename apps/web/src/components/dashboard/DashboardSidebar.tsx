@@ -10,6 +10,8 @@ import {
   FileText,
   LayoutGrid,
   Link2,
+  PanelLeft,
+  PanelLeftClose,
   Settings,
   Tag,
   Zap,
@@ -60,10 +62,60 @@ function initials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
+function NavItem({
+  href,
+  label,
+  icon: Icon,
+  active,
+  collapsed,
+  badge,
+}: {
+  href: string;
+  label: string;
+  icon: typeof LayoutGrid;
+  active: boolean;
+  collapsed: boolean;
+  badge?: number;
+}) {
+  return (
+    <Link
+      href={href}
+      title={collapsed ? label : undefined}
+      aria-label={collapsed ? label : undefined}
+      className={cn(
+        "relative flex items-center rounded-lg text-sm transition-colors",
+        collapsed ? "justify-center px-2 py-2" : "gap-2.5 px-2.5 py-2",
+        active
+          ? "bg-primary/16 text-white"
+          : "text-[#9BA6A1] hover:bg-white/5 hover:text-[#e6e9e7]",
+      )}
+    >
+      <Icon
+        className={cn("size-[18px] shrink-0", active && "text-green-400")}
+        strokeWidth={1.8}
+      />
+      {!collapsed ? <span className="truncate">{label}</span> : null}
+      {badge ? (
+        collapsed ? (
+          <span className="absolute top-1 right-1 size-2 rounded-full bg-[var(--status-failed)]" />
+        ) : (
+          <span className="ml-auto rounded-full bg-[var(--status-failed)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
+            {badge}
+          </span>
+        )
+      ) : null}
+    </Link>
+  );
+}
+
 export function DashboardSidebar({
+  collapsed = false,
+  onToggleCollapsed,
   pendingSyncCount = 0,
   mismatchCount = 0,
 }: {
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
   pendingSyncCount?: number;
   mismatchCount?: number;
 }) {
@@ -77,86 +129,115 @@ export function DashboardSidebar({
   }
 
   return (
-    <aside className="flex h-full w-[248px] shrink-0 flex-col overflow-y-auto bg-sidebar px-3 py-3.5 text-sidebar-foreground">
-      <div className="mb-3.5 flex items-center gap-2.5 rounded-[10px] border border-white/7 bg-white/4 px-2.5 py-2.5">
+    <aside
+      className={cn(
+        "flex h-full shrink-0 flex-col overflow-hidden bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-in-out",
+        collapsed ? "w-16 px-2 py-3" : "w-[248px] px-3 py-3.5",
+      )}
+    >
+      <div
+        className={cn(
+          "mb-2 flex shrink-0 items-center rounded-[10px] border border-white/7 bg-white/4",
+          collapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-2.5",
+        )}
+      >
         <div className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-primary text-white">
           <Building2 className="size-4" strokeWidth={2} />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[13.5px] font-semibold text-white">Dealership</p>
-          <p className="truncate text-[11px] text-[#6B7771]">Single rooftop</p>
-        </div>
-        <ChevronDown className="size-4 shrink-0 text-[#6B7771]" />
+        {!collapsed ? (
+          <>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13.5px] font-semibold text-white">Dealership</p>
+              <p className="truncate text-[11px] text-[#6B7771]">Single rooftop</p>
+            </div>
+            <ChevronDown className="size-4 shrink-0 text-[#6B7771]" />
+          </>
+        ) : null}
       </div>
 
-      <nav className="flex-1 space-y-1">
+      <nav className="min-h-0 flex-1 space-y-0.5 overflow-hidden">
         {navGroups.map((group) => (
-          <div key={group.label} className="mb-1">
-            <p className="px-2.5 pt-3.5 pb-1.5 text-[10.5px] font-semibold tracking-wider text-[#566159] uppercase">
-              {group.label}
-            </p>
+          <div key={group.label} className="mb-0.5">
+            {!collapsed ? (
+              <p className="px-2.5 pt-2.5 pb-1 text-[10.5px] font-semibold tracking-wider text-[#566159] uppercase">
+                {group.label}
+              </p>
+            ) : null}
             {group.items.map((item) => {
-              const { href, label, icon: Icon, badgeKey } = item;
+              const { href, label, icon, badgeKey } = item;
               const active =
                 "exact" in item && item.exact ? pathname === href : pathname.startsWith(href);
-              const badge = badgeFor(badgeKey);
               return (
-                <Link
+                <NavItem
                   key={href}
                   href={href}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
-                    active
-                      ? "bg-primary/16 text-white"
-                      : "text-[#9BA6A1] hover:bg-white/5 hover:text-[#e6e9e7]",
-                  )}
-                >
-                  <Icon
-                    className={cn("size-[18px] shrink-0", active && "text-green-400")}
-                    strokeWidth={1.8}
-                  />
-                  <span className="truncate">{label}</span>
-                  {badge ? (
-                    <span className="ml-auto rounded-full bg-[var(--status-failed)] px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                      {badge}
-                    </span>
-                  ) : null}
-                </Link>
+                  label={label}
+                  icon={icon}
+                  active={active}
+                  collapsed={collapsed}
+                  badge={badgeFor(badgeKey)}
+                />
               );
             })}
           </div>
         ))}
       </nav>
 
-      <div className="mt-auto space-y-1 border-t border-white/10 pt-3">
-        <Link
+      <div className="mt-auto shrink-0 space-y-0.5 border-t border-white/10 pt-2">
+        {onToggleCollapsed ? (
+          <button
+            type="button"
+            onClick={onToggleCollapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={cn(
+              "flex w-full items-center rounded-lg text-sm text-[#9BA6A1] transition-colors hover:bg-white/5 hover:text-[#e6e9e7]",
+              collapsed ? "justify-center px-2 py-2" : "gap-2.5 px-2.5 py-2",
+            )}
+          >
+            {collapsed ? (
+              <PanelLeft className="size-[18px]" strokeWidth={1.8} />
+            ) : (
+              <>
+                <PanelLeftClose className="size-[18px]" strokeWidth={1.8} />
+                <span>Collapse</span>
+              </>
+            )}
+          </button>
+        ) : null}
+
+        <NavItem
           href="/dashboard/settings"
-          className={cn(
-            "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors",
-            pathname.startsWith("/dashboard/settings")
-              ? "bg-primary/16 text-white"
-              : "text-[#9BA6A1] hover:bg-white/5 hover:text-[#e6e9e7]",
-          )}
-        >
-          <Settings className="size-[18px]" strokeWidth={1.8} />
-          Settings
-        </Link>
-        <Link
+          label="Settings"
+          icon={Settings}
+          active={pathname.startsWith("/dashboard/settings")}
+          collapsed={collapsed}
+        />
+
+        <NavItem
           href="/pairing"
-          className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-[#9BA6A1] transition-colors hover:bg-white/5 hover:text-[#e6e9e7]"
-        >
-          <Link2 className="size-[18px]" strokeWidth={1.8} />
-          Lot pairing app
-        </Link>
+          label="Lot pairing app"
+          icon={Link2}
+          active={false}
+          collapsed={collapsed}
+        />
+
         {session ? (
-          <div className="flex items-center gap-2.5 px-2.5 py-2">
+          <div
+            className={cn(
+              "flex items-center py-2",
+              collapsed ? "justify-center px-0" : "gap-2.5 px-2.5",
+            )}
+            title={collapsed ? session.displayName : undefined}
+          >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-green-700 text-xs font-semibold text-white">
               {initials(session.displayName)}
             </span>
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-medium text-white">{session.displayName}</p>
-              <p className="truncate text-[11px] text-[#6B7771]">{roleLabel(session.role)}</p>
-            </div>
+            {!collapsed ? (
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-medium text-white">{session.displayName}</p>
+                <p className="truncate text-[11px] text-[#6B7771]">{roleLabel(session.role)}</p>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -166,7 +247,7 @@ export function DashboardSidebar({
 
 export function DashboardBrandBar() {
   return (
-    <header className="sticky top-0 z-40 flex h-[60px] items-center justify-between border-b border-border/80 bg-background/85 px-6 backdrop-blur-md">
+    <header className="flex h-[60px] shrink-0 items-center justify-between border-b border-border/80 bg-background/85 px-6 backdrop-blur-md">
       <Link href="/dashboard" className="flex items-center gap-2.5 font-semibold tracking-tight">
         <LogoMark size="sm" />
         LotSync

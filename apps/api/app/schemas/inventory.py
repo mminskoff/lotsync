@@ -30,3 +30,34 @@ class InventorySourceResponse(BaseModel):
     last_sync_at: datetime | None
     last_success_at: datetime | None
     last_error: str | None
+
+
+class InventoryTestResult(BaseModel):
+    success: bool
+    message: str
+
+
+class InventorySyncResult(BaseModel):
+    success: bool
+    vehicles_imported: int
+    vehicles_created: int
+    vehicles_updated: int
+    vehicles_off_lot: int = 0
+    sync_run_id: uuid.UUID
+    error: str | None = None
+
+
+class InventorySyncRunResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    dealership_id: uuid.UUID
+    inventory_source_id: uuid.UUID
+    status: str
+    started_at: datetime
+    finished_at: datetime | None
+    records_processed: int
+    vehicles_created: int
+    vehicles_updated: int
+    vehicles_off_lot: int
+    error_message: str | None
