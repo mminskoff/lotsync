@@ -89,14 +89,14 @@ Temporary pairing UI in `apps/web` until `apps/mobile` exists. Validates flows b
 
 ## Milestone 6 — Dashboard (Web)
 
-- [ ] Dashboard shell
-- [ ] Inventory table
-- [ ] Vehicle detail
-- [ ] ESL device table
-- [ ] Pairings page
-- [ ] Sync events page
-- [ ] Price mismatch page
-- [ ] Settings page
+- [x] Dashboard shell
+- [x] Inventory table
+- [x] Vehicle detail
+- [x] ESL device table
+- [x] Pairings page
+- [x] Sync events page
+- [x] Price mismatch page
+- [x] Settings page
 
 ## Milestone 7 — Inventory Adapters
 

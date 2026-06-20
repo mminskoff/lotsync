@@ -31,7 +31,13 @@ function LoginForm() {
 
   useEffect(() => {
     if (isReady && session) {
-      router.replace(next);
+      const dest =
+        next !== "/pairing" && next !== "/login" && next.startsWith("/")
+          ? next
+          : session.role === "lot_staff"
+            ? "/pairing"
+            : "/dashboard";
+      router.replace(dest);
     }
   }, [isReady, session, router, next]);
 
@@ -41,7 +47,13 @@ function LoginForm() {
     setSubmitting(true);
     try {
       signIn(email, password, role);
-      router.replace(next);
+      const dest =
+        next !== "/pairing" && next !== "/login"
+          ? next
+          : role === "lot_staff"
+            ? "/pairing"
+            : "/dashboard";
+      router.replace(dest);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {
