@@ -1,4 +1,7 @@
-"""Seed a test dealership for local development."""
+"""Seed a test dealership for local development.
+
+Prefer seed_demo_dealership.py for a full sandbox with fake inventory.
+"""
 
 import uuid
 

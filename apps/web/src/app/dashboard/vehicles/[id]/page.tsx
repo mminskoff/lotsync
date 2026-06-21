@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SyncStatusBadge } from "@/components/dashboard/SyncStatusBadge";
@@ -21,7 +21,9 @@ import { useDealership } from "@/providers/DealershipProvider";
 
 export default function VehicleDetailPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const { dealershipId } = useDealership();
+  const apiDealershipId = searchParams.get("dealershipId") ?? dealershipId;
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [pairing, setPairing] = useState<AssignmentSummary | null>(null);
   const [events, setEvents] = useState<SyncEvent[]>([]);
@@ -29,7 +31,7 @@ export default function VehicleDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!dealershipId || !params.id) return;
+    if (!apiDealershipId || !params.id) return;
 
     let cancelled = false;
 
@@ -38,9 +40,9 @@ export default function VehicleDetailPage() {
       setError(null);
       try {
         const [v, pairingsRes, syncRows] = await Promise.all([
-          getVehicle(params.id),
-          listActivePairings(),
-          listSyncEvents({ vehicleId: params.id }),
+          getVehicle(params.id, { dealershipId: apiDealershipId }),
+          listActivePairings({ dealershipId: apiDealershipId }),
+          listSyncEvents({ dealershipId: apiDealershipId, vehicleId: params.id }),
         ]);
 
         if (cancelled) return;
@@ -62,7 +64,7 @@ export default function VehicleDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [dealershipId, params.id]);
+  }, [apiDealershipId, params.id]);
 
   if (isLoading) {
     return <Skeleton className="h-64 w-full rounded-2xl" />;
@@ -70,10 +72,18 @@ export default function VehicleDetailPage() {
 
   if (error || !vehicle) {
     return (
-      <Alert variant="destructive">
-        <AlertTitle>Vehicle not found</AlertTitle>
-        <AlertDescription>{error ?? "Unknown vehicle"}</AlertDescription>
-      </Alert>
+      <>
+        <Alert variant="destructive">
+          <AlertTitle>Vehicle not found</AlertTitle>
+          <AlertDescription>
+            {error ??
+              "This vehicle is not in the currently selected rooftop. It may have moved after an inventory refresh."}
+          </AlertDescription>
+        </Alert>
+        <Button variant="outline" className="mt-4" asChild>
+          <Link href="/dashboard/vehicles">← Back to vehicles</Link>
+        </Button>
+      </>
     );
   }
 

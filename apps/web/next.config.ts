@@ -1,9 +1,12 @@
 import type { NextConfig } from "next";
 
-const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000").replace(
-  /\/$/,
-  "",
-);
+/** Backend target for Next rewrites — always localhost when the API runs on this machine. */
+const apiProxyBase = (
+  process.env.API_PROXY_URL ??
+  (process.env.NODE_ENV === "development"
+    ? "http://127.0.0.1:8000"
+    : (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000"))
+).replace(/\/$/, "");
 
 function devOrigins(): string[] {
   const origins = new Set<string>(["localhost", "127.0.0.1"]);
@@ -24,7 +27,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/proxy/:path*",
-        destination: `${apiBase}/api/v1/:path*`,
+        destination: `${apiProxyBase}/api/v1/:path*`,
       },
     ];
   },

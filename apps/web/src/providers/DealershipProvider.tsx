@@ -12,12 +12,27 @@ import {
 import {
   getDealershipId,
   getDefaultDealershipId,
+  getOrganizationId,
+  getRooftopScope,
   setDealershipId,
+  setOrganizationId,
+  setRooftopScope,
+  type RooftopScope,
 } from "@/lib/dealership-storage";
+
+export interface RooftopSelection {
+  organizationId: string | null;
+  scope: RooftopScope;
+  dealershipId: string;
+  dealershipIds: string[];
+}
 
 interface DealershipContextValue {
   dealershipId: string;
-  setDealershipIdValue: (id: string) => void;
+  rooftopScope: RooftopScope;
+  organizationId: string | null;
+  dealershipIds: string[];
+  setRooftopSelection: (selection: RooftopSelection) => void;
 }
 
 const DealershipContext = createContext<DealershipContextValue | null>(null);
@@ -29,6 +44,16 @@ export function DealershipProvider({ children }: { children: React.ReactNode }) 
     }
     return getDealershipId() || getDefaultDealershipId();
   });
+  const [rooftopScope, setScope] = useState<RooftopScope>(() =>
+    typeof window === "undefined" ? "single" : getRooftopScope(),
+  );
+  const [organizationId, setOrgId] = useState<string | null>(() =>
+    typeof window === "undefined" ? null : getOrganizationId() || null,
+  );
+  const [dealershipIds, setDealershipIds] = useState<string[]>(() => {
+    const id = typeof window === "undefined" ? getDefaultDealershipId() : getDealershipId();
+    return id ? [id] : [];
+  });
 
   useEffect(() => {
     const fromEnv = getDefaultDealershipId();
@@ -38,16 +63,32 @@ export function DealershipProvider({ children }: { children: React.ReactNode }) 
       setDealershipId(fromEnv);
     }
     setId(resolved);
+    setScope(getRooftopScope());
+    setOrgId(getOrganizationId() || null);
+    if (getRooftopScope() === "single" && resolved) {
+      setDealershipIds([resolved]);
+    }
   }, []);
 
-  const setDealershipIdValue = useCallback((id: string) => {
-    setDealershipId(id);
-    setId(id.trim());
+  const setRooftopSelection = useCallback((selection: RooftopSelection) => {
+    setDealershipId(selection.dealershipId);
+    setRooftopScope(selection.scope);
+    setOrganizationId(selection.organizationId ?? "");
+    setId(selection.dealershipId);
+    setScope(selection.scope);
+    setOrgId(selection.organizationId);
+    setDealershipIds(selection.dealershipIds);
   }, []);
 
   const value = useMemo(
-    () => ({ dealershipId, setDealershipIdValue }),
-    [dealershipId, setDealershipIdValue],
+    () => ({
+      dealershipId,
+      rooftopScope,
+      organizationId,
+      dealershipIds,
+      setRooftopSelection,
+    }),
+    [dealershipId, rooftopScope, organizationId, dealershipIds, setRooftopSelection],
   );
 
   return (

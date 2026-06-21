@@ -34,7 +34,7 @@ export function DashboardVehicleTable({ vehicles }: { vehicles: VehicleWithAssig
             <TableRow key={vehicle.id}>
               <TableCell>
                 <Link
-                  href={`/dashboard/vehicles/${vehicle.id}`}
+                  href={`/dashboard/vehicles/${vehicle.id}?dealershipId=${vehicle.dealership_id}`}
                   className="font-medium hover:text-primary hover:underline"
                 >
                   {formatVehicleLabel(vehicle.year, vehicle.make, vehicle.model)}

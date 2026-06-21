@@ -33,7 +33,7 @@ export function AssignmentsTable({ pairings }: { pairings: AssignmentSummary[] }
             <TableRow key={pairing.id}>
               <TableCell>
                 <Link
-                  href={`/dashboard/vehicles/${pairing.vehicle.id}`}
+                  href={`/dashboard/vehicles/${pairing.vehicle.id}?dealershipId=${pairing.vehicle.dealership_id}`}
                   className="font-medium hover:text-primary hover:underline"
                 >
                   {formatVehicleLabel(

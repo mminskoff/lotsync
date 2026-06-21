@@ -15,7 +15,7 @@ interface DevDealershipIdControlProps {
 }
 
 export function DevDealershipIdControl({ onSaved }: DevDealershipIdControlProps) {
-  const { dealershipId, setDealershipIdValue } = useDealership();
+  const { dealershipId, setRooftopSelection } = useDealership();
   const [draft, setDraft] = useState(dealershipId);
   const [justSaved, setJustSaved] = useState(false);
 
@@ -34,7 +34,12 @@ export function DevDealershipIdControl({ onSaved }: DevDealershipIdControlProps)
       return;
     }
 
-    setDealershipIdValue(trimmed);
+    setRooftopSelection({
+      organizationId: null,
+      scope: "single",
+      dealershipId: trimmed,
+      dealershipIds: [trimmed],
+    });
     setJustSaved(true);
     toast.success("Dev Dealership ID saved", {
       description: "API requests will use this dealership.",

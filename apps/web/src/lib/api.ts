@@ -74,11 +74,14 @@ export async function apiFetch<T>(
     window.clearTimeout(timeout);
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") {
-      throw new ApiError(0, "Request timed out — check API URL and Wi‑Fi.");
+      throw new ApiError(
+        0,
+        "Request timed out — start the API (cd apps/api && uvicorn app.main:app --reload --port 8000).",
+      );
     }
     throw new ApiError(
       0,
-      "Cannot reach API — confirm the backend is running on port 8000.",
+      "Cannot reach API — start the backend on port 8000 (127.0.0.1, not LAN IP in .env.local).",
     );
   }
 

@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Building2,
   Car,
-  ChevronDown,
   ClipboardList,
   FileText,
   LayoutGrid,
@@ -18,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { LogoMark } from "@/components/brand/LogoMark";
+import { DealershipSwitcher } from "@/components/dashboard/DealershipSwitcher";
 import { roleLabel } from "@/lib/auth-storage";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/AuthProvider";
@@ -135,25 +134,7 @@ export function DashboardSidebar({
         collapsed ? "w-16 px-2 py-3" : "w-[248px] px-3 py-3.5",
       )}
     >
-      <div
-        className={cn(
-          "mb-2 flex shrink-0 items-center rounded-[10px] border border-white/7 bg-white/4",
-          collapsed ? "justify-center p-2" : "gap-2.5 px-2.5 py-2.5",
-        )}
-      >
-        <div className="flex size-[30px] shrink-0 items-center justify-center rounded-lg bg-primary text-white">
-          <Building2 className="size-4" strokeWidth={2} />
-        </div>
-        {!collapsed ? (
-          <>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[13.5px] font-semibold text-white">Dealership</p>
-              <p className="truncate text-[11px] text-[#6B7771]">Single rooftop</p>
-            </div>
-            <ChevronDown className="size-4 shrink-0 text-[#6B7771]" />
-          </>
-        ) : null}
-      </div>
+      <DealershipSwitcher collapsed={collapsed} />
 
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-hidden">
         {navGroups.map((group) => (

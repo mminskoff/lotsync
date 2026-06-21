@@ -114,7 +114,7 @@ export default function DashboardHomePage() {
                 <li key={vehicle.id} className="flex items-center justify-between gap-3 px-5 py-3">
                   <div className="min-w-0">
                     <Link
-                      href={`/dashboard/vehicles/${vehicle.id}`}
+                      href={`/dashboard/vehicles/${vehicle.id}?dealershipId=${vehicle.dealership_id}`}
                       className="font-medium hover:text-primary hover:underline"
                     >
                       {formatVehicleLabel(vehicle.year, vehicle.make, vehicle.model)}

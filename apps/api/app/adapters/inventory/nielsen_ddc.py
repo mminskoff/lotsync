@@ -102,21 +102,41 @@ class NielsenDDCAdapter(InventoryAdapter):
                     )
             elif len(workbook.sheetnames) == 0:
                 raise ValueError("Workbook contains no sheets")
+            elif len(workbook.sheetnames) > 1 and not config.get("import_all_sheets"):
+                available = ", ".join(workbook.sheetnames)
+                raise ValueError(
+                    "sheet_name is required for multi-rooftop workbooks "
+                    f"(tabs: {available}). Use one inventory source per rooftop, "
+                    "or set import_all_sheets=true to merge into one dealership."
+                )
         finally:
             workbook.close()
+
+    def _sheet_names(self, config: dict, workbook) -> list[str]:
+        sheet_name = config.get("sheet_name")
+        if sheet_name:
+            return [sheet_name]
+        if len(workbook.sheetnames) == 1:
+            return workbook.sheetnames
+        if config.get("import_all_sheets"):
+            return workbook.sheetnames
+        available = ", ".join(workbook.sheetnames)
+        raise ValueError(
+            "sheet_name is required for multi-rooftop workbooks "
+            f"(tabs: {available}). Use one inventory source per rooftop."
+        )
 
     def fetch_inventory(
         self, dealership_id: uuid.UUID, config: dict
     ) -> list[NormalizedVehicle]:
         self.test_connection(config)
         path = Path(config["file_path"])
-        sheet_name = config.get("sheet_name")
         source_type = config.get("source_type", "nielsen")
 
         workbook = load_workbook(path, read_only=True, data_only=True)
         vehicles: list[NormalizedVehicle] = []
         try:
-            sheets = [sheet_name] if sheet_name else workbook.sheetnames
+            sheets = self._sheet_names(config, workbook)
             for name in sheets:
                 worksheet = workbook[name]
                 rows = worksheet.iter_rows(min_row=2, values_only=True)

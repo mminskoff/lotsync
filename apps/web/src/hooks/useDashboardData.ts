@@ -68,7 +68,7 @@ function buildOverview(
 }
 
 export function useDashboardData(): DashboardData {
-  const { dealershipId } = useDealership();
+  const { dealershipId, dealershipIds, rooftopScope } = useDealership();
   const [vehicles, setVehicles] = useState<VehicleWithAssignment[]>([]);
   const [pairings, setPairings] = useState<AssignmentSummary[]>([]);
   const [devices, setDevices] = useState<ESLDevice[]>([]);
@@ -79,7 +79,10 @@ export function useDashboardData(): DashboardData {
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    if (!dealershipId) {
+    const loadIds =
+      dealershipIds.length > 0 ? dealershipIds : dealershipId ? [dealershipId] : [];
+
+    if (loadIds.length === 0) {
       setIsLoading(false);
       setError("Set a dealership ID in Settings to load dashboard data.");
       return;
@@ -87,20 +90,31 @@ export function useDashboardData(): DashboardData {
 
     let cancelled = false;
 
+    async function loadForDealership(id: string) {
+      const [vehicleRows, pairingsRes, deviceRows, events, logs] = await Promise.all([
+        listVehicles({ dealershipId: id }),
+        listActivePairings({ dealershipId: id }),
+        listEslDevices(id),
+        listSyncEvents({ dealershipId: id }),
+        listAuditLogs({ dealershipId: id }),
+      ]);
+      return { vehicleRows, pairingsRes, deviceRows, events, logs };
+    }
+
     async function load() {
       setIsLoading(true);
       setError(null);
       try {
-        const [vehicleRows, pairingsRes, deviceRows, events, logs] = await Promise.all([
-          listVehicles(),
-          listActivePairings(),
-          listEslDevices(),
-          listSyncEvents(),
-          listAuditLogs(),
-        ]);
+        const batches = await Promise.all(loadIds.map((id) => loadForDealership(id)));
+
+        const vehicleRows = batches.flatMap((batch) => batch.vehicleRows);
+        const pairings = batches.flatMap((batch) => batch.pairingsRes.pairings);
+        const deviceRows = batches.flatMap((batch) => batch.deviceRows);
+        const events = batches.flatMap((batch) => batch.events);
+        const logs = batches.flatMap((batch) => batch.logs);
 
         const assignmentByVehicle = new Map(
-          pairingsRes.pairings.map((pairing) => [
+          pairings.map((pairing) => [
             pairing.vehicle.id,
             {
               deviceCode: pairing.device.device_id,
@@ -120,7 +134,7 @@ export function useDashboardData(): DashboardData {
 
         if (!cancelled) {
           setVehicles(merged);
-          setPairings(pairingsRes.pairings);
+          setPairings(pairings);
           setDevices(deviceRows);
           setSyncEvents(events);
           setAuditLogs(logs);
@@ -140,7 +154,7 @@ export function useDashboardData(): DashboardData {
     return () => {
       cancelled = true;
     };
-  }, [dealershipId, tick]);
+  }, [dealershipId, dealershipIds, rooftopScope, tick]);
 
   const overview = useMemo(
     () => buildOverview(vehicles, devices, syncEvents),
