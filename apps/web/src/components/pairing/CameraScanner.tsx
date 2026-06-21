@@ -6,7 +6,7 @@ import type { ScanMethod } from "@/hooks/usePairingFlow";
 import type { VehiclePairingSummary } from "@/lib/types/pairing";
 import { formatVehicleTitle } from "@/lib/format";
 import { Keyboard, Zap } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface CameraScannerProps {
   target: ScanTarget;
@@ -74,6 +74,23 @@ function CamTool({
   );
 }
 
+function barcodeFormats(target: ScanTarget) {
+  return import("@zxing/library").then(({ BarcodeFormat, DecodeHintType }) => {
+    const formats =
+      target === "vin"
+        ? [
+            BarcodeFormat.QR_CODE,
+            BarcodeFormat.CODE_128,
+            BarcodeFormat.CODE_39,
+            BarcodeFormat.DATA_MATRIX,
+          ]
+        : [BarcodeFormat.QR_CODE];
+    const hints = new Map();
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
+    return hints;
+  });
+}
+
 export function CameraScanner({
   target,
   stepLabel,
@@ -85,8 +102,8 @@ export function CameraScanner({
   onScan,
   onManual,
 }: CameraScannerProps) {
-  const containerId = useId().replace(/:/g, "");
-  const scannerRef = useRef<{ stop: () => Promise<void>; getRunningTrackCapabilities: () => MediaTrackCapabilities; applyVideoConstraints: (c: MediaTrackConstraints) => Promise<void> } | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const controlsRef = useRef<{ stop: () => void } | null>(null);
   const handledRef = useRef(false);
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
@@ -100,50 +117,71 @@ export function CameraScanner({
     handledRef.current = false;
     setFlashOn(false);
     setFlashSupported(false);
+    setStarting(true);
+    setError(null);
 
     async function start() {
+      const video = videoRef.current;
+      if (!video) return;
+
       try {
-        const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import("html5-qrcode");
+        const [{ BrowserMultiFormatReader }, { NotFoundException }, hints] = await Promise.all([
+          import("@zxing/browser"),
+          import("@zxing/library"),
+          barcodeFormats(target),
+        ]);
         if (cancelled) return;
 
-        const formats =
-          target === "vin"
-            ? [
-                Html5QrcodeSupportedFormats.QR_CODE,
-                Html5QrcodeSupportedFormats.CODE_39,
-                Html5QrcodeSupportedFormats.CODE_128,
-                Html5QrcodeSupportedFormats.DATA_MATRIX,
-              ]
-            : [Html5QrcodeSupportedFormats.QR_CODE];
+        const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 150 });
 
-        const scanner = new Html5Qrcode(containerId, { formatsToSupport: formats, verbose: false });
-        scannerRef.current = scanner;
-
-        await scanner.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 280, height: 280 } },
-          (decodedText) => {
-            if (handledRef.current) return;
-            const parsed = parseScanPayload(decodedText, target);
-            if (!parsed) return;
-            handledRef.current = true;
-            void scanner.stop().finally(() => {
-              onScanRef.current(parsed.value, parsed.method);
-            });
+        const controls = await reader.decodeFromConstraints(
+          {
+            audio: false,
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
           },
-          () => undefined,
+          video,
+          (result, scanError) => {
+            if (handledRef.current) return;
+            if (scanError && !(scanError instanceof NotFoundException)) {
+              return;
+            }
+            if (!result) return;
+
+            const parsed = parseScanPayload(result.getText(), target);
+            if (!parsed) return;
+
+            handledRef.current = true;
+            controls.stop();
+            onScanRef.current(parsed.value, parsed.method);
+          },
         );
 
-        if (!cancelled) {
-          setStarting(false);
-          setError(null);
-          try {
-            const caps = scanner.getRunningTrackCapabilities();
-            setFlashSupported("torch" in caps);
-          } catch {
-            setFlashSupported(false);
+        if (cancelled) {
+          controls.stop();
+          return;
+        }
+
+        controlsRef.current = controls;
+
+        video.setAttribute("playsinline", "true");
+        video.setAttribute("webkit-playsinline", "true");
+        await video.play().catch(() => undefined);
+
+        const stream = video.srcObject;
+        if (stream instanceof MediaStream) {
+          const track = stream.getVideoTracks()[0];
+          const caps = track?.getCapabilities?.();
+          if (caps && "torch" in caps) {
+            setFlashSupported(true);
           }
         }
+
+        setStarting(false);
+        setError(null);
       } catch {
         if (!cancelled) {
           setStarting(false);
@@ -155,18 +193,26 @@ export function CameraScanner({
     void start();
     return () => {
       cancelled = true;
-      const scanner = scannerRef.current;
-      scannerRef.current = null;
-      if (scanner) void scanner.stop().catch(() => undefined);
+      controlsRef.current?.stop();
+      controlsRef.current = null;
+      const video = videoRef.current;
+      if (video?.srcObject instanceof MediaStream) {
+        video.srcObject.getTracks().forEach((track) => track.stop());
+        video.srcObject = null;
+      }
     };
-  }, [containerId, target]);
+  }, [target]);
 
   const toggleFlash = useCallback(async () => {
-    const scanner = scannerRef.current;
-    if (!scanner || !flashSupported) return;
+    const video = videoRef.current;
+    if (!(video?.srcObject instanceof MediaStream) || !flashSupported) return;
+
+    const track = video.srcObject.getVideoTracks()[0];
+    if (!track) return;
+
     const next = !flashOn;
     try {
-      await scanner.applyVideoConstraints({
+      await track.applyConstraints({
         advanced: [{ torch: next } as MediaTrackConstraintSet],
       });
       setFlashOn(next);
@@ -176,10 +222,9 @@ export function CameraScanner({
   }, [flashOn, flashSupported]);
 
   const vehicleTitle = vehicle ? formatVehicleTitle(vehicle) : null;
-  const cameraReady = !starting && !error;
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[radial-gradient(120%_90%_at_50%_35%,#2b332e_0%,#161b18_60%,#0c100e_100%)] pt-[42px]">
+    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-black pt-[42px]">
       <div className="absolute top-1.5 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/40 px-3 py-1.5 text-[11px] font-semibold text-white backdrop-blur-sm">
         {stepLabel}
       </div>
@@ -207,26 +252,27 @@ export function CameraScanner({
         ) : null}
       </div>
 
-      <div className="relative flex min-h-0 flex-1 items-center justify-center">
-        <div
-          id={containerId}
-          className={`absolute inset-0 overflow-hidden [&_video]:size-full [&_video]:object-cover ${
-            cameraReady ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+      <div className="relative flex min-h-[min(52dvh,420px)] min-w-full flex-1 items-center justify-center overflow-hidden">
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full object-cover"
+          playsInline
+          muted
+          autoPlay
         />
 
         {starting ? (
-          <div className="relative z-10 flex items-center justify-center">
+          <div className="relative z-10 flex items-center justify-center bg-black/40">
             <div className="size-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
           </div>
-        ) : (
-          <div className="relative z-10">
+        ) : error ? null : (
+          <div className="pointer-events-none relative z-10">
             <Brackets />
           </div>
         )}
       </div>
 
-      <div className="relative z-10 shrink-0 px-5 pt-4 pb-[max(22px,env(safe-area-inset-bottom))]">
+      <div className="relative z-10 shrink-0 bg-black/80 px-5 pt-4 pb-[max(22px,env(safe-area-inset-bottom))]">
         <div className="mx-auto grid max-w-[320px] grid-cols-[48px_1fr_48px] items-end gap-3">
           <div className="flex justify-center">
             {flashSupported ? (
@@ -248,7 +294,6 @@ export function CameraScanner({
             </button>
           </div>
 
-          {/* Balance column so manual stays centered when flash is visible */}
           <div aria-hidden className="size-12" />
         </div>
       </div>

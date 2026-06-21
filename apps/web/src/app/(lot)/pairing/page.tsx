@@ -176,7 +176,7 @@ function PairingPageContent() {
   }
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       {!dealershipId ? (
         <Alert variant="destructive" className="mx-4 mb-4 mt-2">
           <AlertTitle>Dealership ID required</AlertTitle>
@@ -191,7 +191,7 @@ function PairingPageContent() {
       ) : null}
 
       {stepContent}
-    </>
+    </div>
   );
 }
 
