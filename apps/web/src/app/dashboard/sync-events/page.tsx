@@ -72,7 +72,7 @@ export default function DashboardSyncEventsPage() {
           </AlertDescription>
         </Alert>
       ) : (
-        <SyncEventsTable events={filtered} />
+        <SyncEventsTable events={filtered} onRetried={reload} />
       )}
     </>
   );

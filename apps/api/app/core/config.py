@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     supabase_anon_key: str = ""
     supabase_service_role_key: str = ""
     database_url: str = ""
+    renderer_adapter: str = "stub"
+    transport_adapter: str = "stub"
+    stub_transport_fail: bool = False
+    sync_worker_poll_interval_seconds: float = 5.0
 
 
 settings = Settings()

@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from app.models.vehicle import Vehicle
 from app.schemas.normalized_vehicle import NormalizedVehicle
 from app.services.audit_service import log_action
+from app.services.change_detection_service import diff_snapshots, snapshot_vehicle
+from app.services.sync_enqueue_service import enqueue_if_paired, load_active_assignments_by_vehicle
 
 
 @dataclass
@@ -16,6 +18,7 @@ class VehicleUpsertResult:
     updated: int
     off_lot: int
     processed: int
+    sync_events_enqueued: int = 0
 
 
 def _apply_normalized_fields(
@@ -40,6 +43,30 @@ def _apply_normalized_fields(
         vehicle.vehicle_url = record.vehicle_url
 
 
+def _maybe_enqueue_inventory_change(
+    db: Session,
+    dealership_id: uuid.UUID,
+    vehicle: Vehicle,
+    before: dict,
+    paired_assignments: dict,
+) -> bool:
+    after = snapshot_vehicle(vehicle)
+    changes = diff_snapshots(before, after)
+    if changes is None:
+        return False
+
+    event = enqueue_if_paired(
+        db,
+        dealership_id=dealership_id,
+        vehicle=vehicle,
+        event_type="inventory.change",
+        old_value={"changes": changes},
+        new_value={"vin": vehicle.vin, "changes": changes},
+        paired_assignments=paired_assignments,
+    )
+    return event is not None
+
+
 def upsert_vehicles_from_import(
     db: Session,
     dealership_id: uuid.UUID,
@@ -50,6 +77,7 @@ def upsert_vehicles_from_import(
 ) -> VehicleUpsertResult:
     synced_at = datetime.now(UTC)
     imported_vins = {record.vin.upper() for record in records}
+    paired_assignments = load_active_assignments_by_vehicle(db, dealership_id)
 
     existing_stmt = select(Vehicle).where(
         Vehicle.dealership_id == dealership_id,
@@ -59,6 +87,7 @@ def upsert_vehicles_from_import(
 
     created = 0
     updated = 0
+    sync_events_enqueued = 0
 
     for record in records:
         vin = record.vin.upper()
@@ -75,8 +104,13 @@ def upsert_vehicles_from_import(
             existing_by_vin[vin] = vehicle
             created += 1
         else:
+            before = snapshot_vehicle(existing)
             _apply_normalized_fields(existing, record, source_type, synced_at)
             updated += 1
+            if _maybe_enqueue_inventory_change(
+                db, dealership_id, existing, before, paired_assignments
+            ):
+                sync_events_enqueued += 1
 
     off_lot = 0
     if mark_missing_off_lot and imported_vins:
@@ -87,9 +121,14 @@ def upsert_vehicles_from_import(
             Vehicle.status.not_in(["sold", "off_lot"]),
         )
         for vehicle in db.scalars(stale_stmt).all():
+            before = snapshot_vehicle(vehicle)
             vehicle.status = "off_lot"
             vehicle.updated_at = synced_at
             off_lot += 1
+            if _maybe_enqueue_inventory_change(
+                db, dealership_id, vehicle, before, paired_assignments
+            ):
+                sync_events_enqueued += 1
 
     log_action(
         db,
@@ -103,6 +142,7 @@ def upsert_vehicles_from_import(
             "created": created,
             "updated": updated,
             "off_lot": off_lot,
+            "sync_events_enqueued": sync_events_enqueued,
         },
     )
 
@@ -111,4 +151,5 @@ def upsert_vehicles_from_import(
         updated=updated,
         off_lot=off_lot,
         processed=len(records),
+        sync_events_enqueued=sync_events_enqueued,
     )

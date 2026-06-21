@@ -14,8 +14,10 @@ export function StatCard({
   return (
     <div className={cn("rounded-2xl border border-border bg-background p-5 shadow-sm", className)}>
       <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 text-3xl font-semibold tracking-tight">{value}</p>
-      {hint ? <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p> : null}
+      <p className="mt-2 text-3xl font-semibold tabular-nums leading-none tracking-normal">{value}</p>
+      {hint ? (
+        <p className="mt-2 text-sm leading-snug tracking-normal text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   );
 }

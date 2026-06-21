@@ -26,5 +26,12 @@ class SyncEventResponse(BaseModel):
     new_value: dict | None
     status: str
     error_message: str | None
+    attempt_count: int
     created_at: datetime
     processed_at: datetime | None
+
+
+class SyncEventRetryResponse(BaseModel):
+    success: bool
+    sync_event: SyncEventResponse
+    message: str

@@ -8,6 +8,7 @@ export interface SyncEvent {
   new_value: Record<string, unknown> | null;
   status: string;
   error_message: string | null;
+  attempt_count: number;
   created_at: string;
   processed_at: string | null;
 }

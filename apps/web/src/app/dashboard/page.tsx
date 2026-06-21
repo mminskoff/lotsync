@@ -68,13 +68,8 @@ export default function DashboardHomePage() {
         <StatCard label="Failed syncs" value={overview.failedSyncs} hint="Needs attention" />
         <StatCard
           label="ESL devices"
-          value={
-            <>
-              {overview.totalDevices}
-              <span className="text-base font-normal text-muted-foreground"> registered</span>
-            </>
-          }
-          hint={`${overview.devicesOnline} reporting online`}
+          value={overview.totalDevices}
+          hint={`${overview.totalDevices} registered · ${overview.devicesOnline} reporting online`}
         />
       </div>
 

@@ -18,3 +18,13 @@ export function listSyncEvents(options?: {
     dealershipId: options?.dealershipId,
   });
 }
+
+export function retrySyncEvent(
+  eventId: string,
+  options?: { dealershipId?: string },
+): Promise<{ success: boolean; message: string; sync_event: SyncEvent }> {
+  return apiFetch(`/sync-events/${eventId}/retry`, {
+    method: "POST",
+    dealershipId: options?.dealershipId,
+  });
+}

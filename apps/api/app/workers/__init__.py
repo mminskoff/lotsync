@@ -1,1 +1,1 @@
-"""Background workers (sync engine runs here in M8 Phase 4+)."""
+"""Background workers — run sync worker: python -m app.workers.sync_worker"""
