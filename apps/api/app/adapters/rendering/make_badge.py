@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from PIL import ImageDraw
 
+from app.adapters.rendering.label_fonts import load_font
+
 BLACK = 0
 WHITE = 255
 

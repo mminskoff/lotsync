@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 interface LabelPreviewProps {
   vehicleId: string;
   dealershipId: string;
@@ -13,21 +15,25 @@ export function LabelPreview({
   alt = "ESL label preview",
   className,
 }: LabelPreviewProps) {
-  const src = `/api/label-preview/${vehicleId}?dealershipId=${encodeURIComponent(dealershipId)}&t=${vehicleId}`;
+  const src = useMemo(() => {
+    const params = new URLSearchParams({
+      dealershipId,
+      v: "2",
+    });
+    return `/api/label-preview/${vehicleId}?${params.toString()}`;
+  }, [vehicleId, dealershipId]);
 
   return (
     <div className={className}>
-      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Tag preview
       </p>
-      <div className="inline-block rounded-lg border border-border bg-white p-2 shadow-sm">
+      <div className="w-full max-w-xl rounded-xl border border-border bg-white p-3 shadow-sm">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={alt}
-          className="max-w-full"
-          width={400}
-          height={300}
+          className="h-auto w-full"
           loading="lazy"
         />
       </div>

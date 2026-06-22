@@ -15,16 +15,32 @@ from app.services.label_payload_service import (
 )
 from app.services.sync_enqueue_service import get_active_assignment_for_vehicle
 
+# Dashboard previews render at 2× ESL resolution for readable typography
+PREVIEW_DISPLAY_WIDTH = 800
+PREVIEW_DISPLAY_HEIGHT = 480
+
 
 def _default_profile() -> DeviceProfile:
     return DeviceProfile(
         provider="preview",
         model="default",
-        width=400,
-        height=300,
+        width=PREVIEW_DISPLAY_WIDTH,
+        height=PREVIEW_DISPLAY_HEIGHT,
         color_mode="BW",
         supports_qr=True,
     )
+
+
+def _profile_for_display(profile: DeviceProfile) -> DeviceProfile:
+    """Scale to a large canvas so dashboard previews have bold, readable type."""
+    aspect = profile.width / profile.height if profile.height else 4 / 3
+    if aspect >= 1.2:
+        width = PREVIEW_DISPLAY_WIDTH
+        height = max(int(width / aspect), 200)
+    else:
+        height = PREVIEW_DISPLAY_HEIGHT
+        width = max(int(height * aspect), 200)
+    return profile.model_copy(update={"width": width, "height": height})
 
 
 def resolve_label_context(
@@ -60,8 +76,9 @@ def render_vehicle_label_png(
     payload, profile = resolve_label_context(
         db, dealership_id, vehicle_id, esl_device_id=esl_device_id
     )
+    display_profile = _profile_for_display(profile)
     renderer = get_renderer_adapter("preview")
-    rendered = renderer.render(payload, profile)
+    rendered = renderer.render(payload, display_profile)
     if rendered.format != "png" or not isinstance(rendered.payload, str):
         raise ValueError("Preview renderer did not return PNG data")
     return base64.b64decode(rendered.payload)
