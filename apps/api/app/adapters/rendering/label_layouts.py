@@ -27,6 +27,15 @@ from app.adapters.rendering.label_text import (
 )
 from app.schemas.label import DeviceProfile, LabelPayload
 
+# Large-tag layout tuned to 400×300 design mockup (scaled proportionally)
+LARGE_DIVIDER_Y_RATIO = 0.70
+LARGE_QR_SIZE_RATIO = 0.24
+LARGE_PRICE_SIZE_RATIO = 0.175
+LARGE_TITLE_SIZE_RATIO = 0.073
+LARGE_TRIM_SIZE_RATIO = 0.045
+LARGE_STATUS_SIZE_RATIO = 0.037
+LARGE_SPECS_SIZE_RATIO = 0.037
+
 
 def _qr_data(payload: LabelPayload) -> str:
     return payload.qr_url or f"https://lotsync.app/v/{payload.vin}"
@@ -43,12 +52,8 @@ def _draw_sold_stamp(draw: ImageDraw.ImageDraw, width: int, height: int) -> None
     cy = int(height * 0.52)
     x0 = cx - stamp_w // 2
     y0 = cy - stamp_h // 2
-    x1 = x0 + stamp_w
-    y1 = y0 + stamp_h
-
-    # Rotated stamp via temporary layer would be ideal; approximate with axis-aligned box + text
     draw.rounded_rectangle(
-        [(x0, y0), (x1, y1)],
+        [(x0, y0), (x0 + stamp_w, y0 + stamp_h)],
         radius=6,
         outline=RED,
         width=3,
@@ -72,11 +77,11 @@ def _draw_header_status(
     font_size: int,
 ) -> int:
     label, color = status_label(payload)
-    dot_r = max(font_size // 4, 3)
+    dot_r = max(font_size // 3, 4)
     content_color = _content_color(color, payload)
-    draw_status_dot(draw, margin, y + 2, dot_r, content_color, outline_only=is_sold(payload))
+    draw_status_dot(draw, margin, y + 1, dot_r, content_color, outline_only=is_sold(payload))
     status_font = load_font(font_size, weight="bold")
-    draw.text((margin + dot_r * 2 + 6, y), label, fill=content_color, font=status_font)
+    draw.text((margin + dot_r * 2 + 8, y), label, fill=content_color, font=status_font)
 
     if payload.stock_number:
         stock_font = load_font(font_size, weight="medium")
@@ -89,7 +94,7 @@ def _draw_header_status(
             font=stock_font,
         )
 
-    return y + font_size + max(font_size // 3, 4)
+    return y + font_size + max(int(font_size * 0.35), 4)
 
 
 def _draw_price_block(
@@ -107,11 +112,19 @@ def _draw_price_block(
 
     if is_price_reduced(payload) and payload.previous_price:
         old_font = fit_text(
-            draw, payload.previous_price, int(target_size * 0.55), max_width, weight="medium", min_size=10
+            draw,
+            payload.previous_price,
+            int(target_size * 0.5),
+            max_width,
+            weight="medium",
+            min_size=10,
         )
-        y = draw_strikethrough_price(draw, x, y, payload.previous_price, old_font, RED) + 2
+        y = draw_strikethrough_price(draw, x, y, payload.previous_price, old_font, RED) + 4
 
-    price_font = fit_text(draw, payload.price, target_size, max_width, weight="bold", min_size=14)
+    min_price = max(int(target_size * 0.72), 28)
+    price_font = fit_text(
+        draw, payload.price, target_size, max_width, weight="bold", min_size=min_price
+    )
     draw.text((x, y), payload.price, fill=price_color, font=price_font)
     bbox = draw.textbbox((x, y), payload.price, font=price_font)
     return bbox[3]
@@ -126,27 +139,28 @@ def _draw_vin_footer(
     width: int,
     height: int,
     margin: int,
+    divider_y: int,
     qr_size: int,
 ) -> None:
-    footer_y = height - margin - qr_size
-    draw.line(
-        [(margin, footer_y - 6), (width - margin, footer_y - 6)],
-        fill=LIGHT_GRAY,
-        width=1,
-    )
+    draw.line([(margin, divider_y), (width - margin, divider_y)], fill=LIGHT_GRAY, width=1)
 
-    vin_label_font = load_font(max(int(height * 0.045), 8), weight="bold")
-    vin_font = load_font(max(int(height * 0.05), 9), weight="medium")
-    vin_color = _content_color(BLACK, payload)
-    vin_label_color = _content_color(GREEN, payload)
+    footer_y = divider_y + max(int(height * 0.025), 8)
+    vin_label_font = load_font(max(int(height * 0.032), 9), weight="bold")
+    vin_font = load_font(max(int(height * 0.036), 10), weight="medium")
 
-    draw.text((margin, footer_y), "VIN", fill=vin_label_color, font=vin_label_font)
+    draw.text((margin, footer_y), "VIN", fill=_content_color(GREEN, payload), font=vin_label_font)
     label_bbox = draw.textbbox((margin, footer_y), "VIN", font=vin_label_font)
-    draw.text((margin, label_bbox[3]), payload.vin, fill=vin_color, font=vin_font)
+    draw.text(
+        (margin, label_bbox[3] + 2),
+        payload.vin,
+        fill=_content_color(BLACK, payload),
+        font=vin_font,
+    )
 
     if profile.supports_qr and qr_size >= 28:
         qr = make_qr_image(_qr_data(payload), size=qr_size)
-        image.paste(qr, (width - margin - qr_size, footer_y - 2))
+        qr_y = divider_y + max(int(height * 0.012), 4)
+        image.paste(qr, (width - margin - qr_size, qr_y))
 
 
 def render_large(
@@ -158,39 +172,67 @@ def render_large(
 ) -> Image.Image:
     image = Image.new("RGB", (width, height), BG)
     draw = ImageDraw.Draw(image)
-    margin = max(int(width * 0.05), 10)
+    margin = max(int(width * 0.045), 14)
     inner_w = width - margin * 2
+
+    divider_y = int(height * LARGE_DIVIDER_Y_RATIO)
+    qr_size = max(int(height * LARGE_QR_SIZE_RATIO), 48)
 
     y = margin
     y = _draw_header_status(
-        draw, payload, width=width, margin=margin, y=y, font_size=max(int(height * 0.055), 11)
+        draw,
+        payload,
+        width=width,
+        margin=margin,
+        y=y,
+        font_size=max(int(height * LARGE_STATUS_SIZE_RATIO), 10),
     )
+    y += max(int(height * 0.014), 4)
 
     headline = vehicle_headline(payload)
-    title_font = fit_text(draw, headline, int(height * 0.11), inner_w, weight="bold", min_size=14)
+    title_font = fit_text(
+        draw,
+        headline,
+        int(height * LARGE_TITLE_SIZE_RATIO),
+        inner_w,
+        weight="bold",
+        min_size=14,
+    )
     draw.text((margin, y), headline, fill=_content_color(BLACK, payload), font=title_font)
-    title_bbox = draw.textbbox((margin, y), headline, font=title_font)
-    y = title_bbox[3] + 2
+    y = draw.textbbox((margin, y), headline, font=title_font)[3] + max(int(height * 0.008), 2)
 
     _, trim = split_model_trim(payload)
     if trim:
-        trim_font = load_font(max(int(height * 0.065), 11), weight="regular")
+        trim_font = load_font(max(int(height * LARGE_TRIM_SIZE_RATIO), 11), weight="regular")
         draw.text((margin, y), trim, fill=_content_color(GRAY, payload), font=trim_font)
-        trim_bbox = draw.textbbox((margin, y), trim, font=trim_font)
-        y = trim_bbox[3] + max(int(height * 0.02), 4)
+        y = draw.textbbox((margin, y), trim, font=trim_font)[3] + max(int(height * 0.018), 5)
 
     y = _draw_price_block(
-        draw, payload, x=margin, y=y, max_width=inner_w, target_size=int(height * 0.16)
+        draw,
+        payload,
+        x=margin,
+        y=y,
+        max_width=inner_w,
+        target_size=int(height * LARGE_PRICE_SIZE_RATIO),
     )
-    y += max(int(height * 0.025), 4)
+    y += max(int(height * 0.014), 4)
 
     specs = payload.specs_line or (f"{payload.mileage} mi" if payload.mileage else None)
     if specs:
-        specs_font = load_font(max(int(height * 0.055), 10), weight="regular")
+        specs_font = load_font(max(int(height * LARGE_SPECS_SIZE_RATIO), 10), weight="regular")
         draw.text((margin, y), specs, fill=_content_color(BLACK, payload), font=specs_font)
 
-    qr_size = max(int(height * 0.22), 48)
-    _draw_vin_footer(draw, image, payload, profile, width=width, height=height, margin=margin, qr_size=qr_size)
+    _draw_vin_footer(
+        draw,
+        image,
+        payload,
+        profile,
+        width=width,
+        height=height,
+        margin=margin,
+        divider_y=divider_y,
+        qr_size=qr_size,
+    )
 
     if is_sold(payload):
         _draw_sold_stamp(draw, width, height)
@@ -228,8 +270,7 @@ def render_medium(
 
     price_y = margin + int(height * 0.34)
     price_font = fit_text(draw, payload.price, int(height * 0.38), width // 2, weight="bold", min_size=12)
-    price_color = _content_color(GREEN, payload)
-    draw.text((margin, price_y), payload.price, fill=price_color, font=price_font)
+    draw.text((margin, price_y), payload.price, fill=_content_color(GREEN, payload), font=price_font)
 
     qr_size = max(int(height * 0.62), 36)
     if profile.supports_qr:

@@ -1,0 +1,228 @@
+/* ESL e-paper label — tag-scoped tokens (does not touch global shadcn theme) */
+
+.ep-preview-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.ep-device {
+  display: inline-block;
+  padding: 10px;
+  border-radius: 11px;
+  background: linear-gradient(160deg, #e6e8e4, #cccec9);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.ep {
+  --ink: #1c1c1e;
+  --paper: #f3f2ea;
+  --accent: #0c8a5f;
+  --alert: #bf3428;
+  --muted: #6e6e68;
+  --hair: #c8c7be;
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), "Geist", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+  position: relative;
+}
+
+.ep.lg {
+  width: 400px;
+  height: 300px;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.ep.bw {
+  --accent: #1c1c1e;
+  --alert: #1c1c1e;
+  --muted: #5a5a56;
+}
+
+.ep.sold-faded {
+  opacity: 0.45;
+}
+
+.ep-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+}
+
+.ep-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.ep-status.is-alert {
+  color: var(--alert);
+}
+
+.ep-status.is-muted {
+  color: var(--muted);
+}
+
+.ep-status .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ep-stock {
+  font-family: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.ep-stock strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ep-name {
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.ep-trim {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--muted);
+  padding-bottom: 6px;
+}
+
+.ep-price-block {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 0;
+}
+
+.ep-was {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--alert);
+  text-decoration: line-through;
+  padding-bottom: 2px;
+  font-feature-settings: "tnum" 1;
+}
+
+.ep-price {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.04em;
+  color: var(--accent);
+  padding-bottom: 4px;
+  font-feature-settings: "tnum" 1;
+}
+
+.ep.bw .ep-price {
+  color: var(--ink);
+}
+
+.ep-price .cur {
+  font-size: 36px;
+  font-weight: 600;
+  vertical-align: 7px;
+}
+
+.ep-specs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding-top: 7px;
+}
+
+.ep-specs i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--muted);
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.ep-foot {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid var(--hair);
+}
+
+.ep-vin-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.ep.bw .ep-vin-label {
+  color: var(--muted);
+}
+
+.ep-vin {
+  font-family: var(--font-geist-mono), "Geist Mono", ui-monospace, monospace;
+  font-size: 15.5px;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+
+.ep-qr {
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.ep-sold {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.ep-sold span {
+  display: inline-block;
+  padding: 10px 28px;
+  border: 3px solid var(--alert);
+  border-radius: 6px;
+  background: rgba(255, 240, 240, 0.92);
+  color: var(--alert);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+}
+
+@media (max-width: 440px) {
+  .ep-device {
+    transform: scale(calc(100vw / 440));
+    transform-origin: top center;
+  }
+}

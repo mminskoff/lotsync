@@ -5,20 +5,19 @@ from PIL import ImageFont
 # macOS, Linux, fallback — bold for price, medium for title, regular for details
 _FONT_CANDIDATES: dict[str, list[tuple[str, int | None]]] = {
     "bold": [
-        ("/System/Library/Fonts/Supplemental/Arial Bold.ttf", None),
         ("/System/Library/Fonts/HelveticaNeue.ttc", 1),
-        ("/System/Library/Fonts/Supplemental/Georgia Bold.ttf", None),
+        ("/System/Library/Fonts/SFNSScript.ttf", 2),
+        ("/System/Library/Fonts/Supplemental/Arial Bold.ttf", None),
         ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", None),
     ],
     "medium": [
-        ("/System/Library/Fonts/Supplemental/Arial.ttf", None),
         ("/System/Library/Fonts/HelveticaNeue.ttc", 0),
-        ("/System/Library/Fonts/Supplemental/Georgia.ttf", None),
+        ("/System/Library/Fonts/Supplemental/Arial.ttf", None),
         ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", None),
     ],
     "regular": [
-        ("/System/Library/Fonts/Supplemental/Arial.ttf", None),
         ("/System/Library/Fonts/HelveticaNeue.ttc", 0),
+        ("/System/Library/Fonts/Supplemental/Arial.ttf", None),
         ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", None),
     ],
 }

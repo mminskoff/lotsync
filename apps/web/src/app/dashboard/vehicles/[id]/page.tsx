@@ -166,7 +166,7 @@ export default function VehicleDetailPage() {
         </section>
 
         <section className="rounded-2xl border border-border bg-background p-5 lg:col-span-2">
-          <LabelPreview vehicleId={vehicle.id} dealershipId={apiDealershipId} />
+          <LabelPreview vehicle={vehicle} />
         </section>
 
         <section className="rounded-2xl border border-border bg-background p-5 lg:col-span-2">
