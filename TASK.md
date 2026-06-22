@@ -100,9 +100,11 @@ Temporary pairing UI in `apps/web` until `apps/mobile` exists. Validates flows b
 
 ## Milestone 7 — Inventory Adapters
 
-- [ ] Define InventoryAdapter
-- [ ] Manual adapter
-- [ ] CSV adapter
+- [x] Define InventoryAdapter
+- [x] Manual adapter (via vehicle CRUD)
+- [x] CSV adapter
+- [x] Nielsen DDC adapter
+- [x] Reynolds adapter (stub)
 - [ ] JSON adapter
 - [ ] XML adapter
 - [ ] Driveway test adapter
@@ -110,14 +112,30 @@ Temporary pairing UI in `apps/web` until `apps/mobile` exists. Validates flows b
 
 ## Milestone 8 — Sync Engine
 
-- [ ] Define LabelPayload
-- [ ] Define DeviceProfile
-- [ ] Generate LabelPayload from vehicle
-- [ ] Define RendererAdapter
-- [ ] Define TransportAdapter
-- [ ] Create sync event worker
-- [ ] Add retry logic
-- [ ] Add failed sync status
+- [x] Define LabelPayload
+- [x] Define DeviceProfile
+- [x] Generate LabelPayload from vehicle
+- [x] Define RendererAdapter
+- [x] Define TransportAdapter
+- [x] Stub renderer + stub transport
+- [x] Create sync event worker (`app/workers/sync_worker.py`)
+- [x] Add retry logic
+- [x] Add failed sync status
+- [x] Change detection on inventory import
+- [x] Pairing triggers sync event
+
+### Milestone 8.5 — Pre-Hardware (while waiting for Minew kit)
+
+Complete in order. Hardware (M9) only swaps renderer/transport adapters.
+
+- [ ] **8.5.1** Deploy sync worker on Railway (second service)
+- [x] **8.5.2** `POST /sync-events/process` — manual batch trigger + worker docs
+- [x] **8.5.3** PNG label preview renderer + `GET /vehicles/{id}/label-preview`
+- [x] **8.5.4** Dashboard label preview on vehicle detail page
+- [ ] **8.5.5** Supabase Auth (replace placeholder login)
+- [ ] **8.5.6** Scheduled Nielsen inventory sync
+- [ ] **8.5.7** Demo ESL seed for Nielsen rooftops
+- [ ] **8.5.8** Price mismatch detection rules
 
 ## Milestone 9 — Minew Kit
 

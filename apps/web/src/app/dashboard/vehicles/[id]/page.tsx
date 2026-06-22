@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 
+import { LabelPreview } from "@/components/dashboard/LabelPreview";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SyncStatusBadge } from "@/components/dashboard/SyncStatusBadge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -162,6 +163,10 @@ export default function VehicleDetailPage() {
           ) : (
             <p className="text-sm text-muted-foreground">No active tag assignment.</p>
           )}
+        </section>
+
+        <section className="rounded-2xl border border-border bg-background p-5 lg:col-span-2">
+          <LabelPreview vehicleId={vehicle.id} dealershipId={apiDealershipId} />
         </section>
 
         <section className="rounded-2xl border border-border bg-background p-5 lg:col-span-2">

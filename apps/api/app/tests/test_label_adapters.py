@@ -78,6 +78,12 @@ def test_unknown_renderer_raises():
         get_renderer_adapter("minew")
 
 
+def test_preview_renderer_registered():
+    renderer = get_renderer_adapter("preview")
+    rendered = renderer.render(_sample_payload(), _sample_profile())
+    assert rendered.format == "png"
+
+
 def test_unknown_transport_raises():
     with pytest.raises(ValueError, match="Unsupported transport"):
         get_transport_adapter("minew")

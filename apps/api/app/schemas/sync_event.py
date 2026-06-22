@@ -35,3 +35,12 @@ class SyncEventRetryResponse(BaseModel):
     success: bool
     sync_event: SyncEventResponse
     message: str
+
+
+class SyncEventProcessResponse(BaseModel):
+    success: bool
+    processed: int
+    synced: int
+    failed: int
+    retried: int
+    message: str

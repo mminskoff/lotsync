@@ -28,3 +28,27 @@ export function retrySyncEvent(
     dealershipId: options?.dealershipId,
   });
 }
+
+export interface ProcessSyncResult {
+  success: boolean;
+  processed: number;
+  synced: number;
+  failed: number;
+  retried: number;
+  message: string;
+}
+
+export function processSyncEvents(options?: {
+  limit?: number;
+  dealershipId?: string;
+}): Promise<ProcessSyncResult> {
+  const params = new URLSearchParams();
+  if (options?.limit) {
+    params.set("limit", String(options.limit));
+  }
+  const qs = params.toString();
+  return apiFetch(`/sync-events/process${qs ? `?${qs}` : ""}`, {
+    method: "POST",
+    dealershipId: options?.dealershipId,
+  });
+}

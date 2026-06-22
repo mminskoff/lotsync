@@ -5,8 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.tenancy import get_dealership_id
-from app.schemas.sync_event import SyncEventCreate, SyncEventResponse, SyncEventRetryResponse
+from app.schemas.sync_event import (
+    SyncEventCreate,
+    SyncEventProcessResponse,
+    SyncEventResponse,
+    SyncEventRetryResponse,
+)
 from app.services import sync_event_service
+from app.services.sync_engine_service import process_pending_sync_events
 
 router = APIRouter(prefix="/sync-events", tags=["sync-events"])
 
@@ -30,6 +36,25 @@ def create_sync_event(
     db: Session = Depends(get_db),
 ):
     return sync_event_service.create_sync_event(db, dealership_id, data)
+
+
+@router.post("/process", response_model=SyncEventProcessResponse)
+def process_sync_events(
+    limit: int = Query(default=25, ge=1, le=100),
+    dealership_id: UUID = Depends(get_dealership_id),
+    db: Session = Depends(get_db),
+):
+    """Process pending sync events (same logic as the background worker)."""
+    _ = dealership_id
+    summary = process_pending_sync_events(db, limit=limit)
+    return SyncEventProcessResponse(
+        success=True,
+        processed=summary["processed"],
+        synced=summary["synced"],
+        failed=summary["failed"],
+        retried=summary["retried"],
+        message="Sync batch complete",
+    )
 
 
 @router.post("/{event_id}/retry", response_model=SyncEventRetryResponse)
