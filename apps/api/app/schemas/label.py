@@ -15,6 +15,8 @@ class LabelPayload(BaseModel):
     status: str = "available"
     qr_url: str | None = None
     disclaimer: str | None = None
+    previous_price: str | None = None
+    specs_line: str | None = None
 
 
 class DeviceProfile(BaseModel):

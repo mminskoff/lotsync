@@ -15,32 +15,34 @@ from app.services.label_payload_service import (
 )
 from app.services.sync_enqueue_service import get_active_assignment_for_vehicle
 
-# Dashboard previews render at 2× ESL resolution for readable typography
+# Dashboard previews render at 2× native ESL resolution (4.2" default → 800×600)
 PREVIEW_DISPLAY_WIDTH = 800
-PREVIEW_DISPLAY_HEIGHT = 480
+PREVIEW_DISPLAY_HEIGHT = 600
+NATIVE_DEFAULT_WIDTH = 400
+NATIVE_DEFAULT_HEIGHT = 300
 
 
 def _default_profile() -> DeviceProfile:
     return DeviceProfile(
         provider="preview",
-        model="default",
-        width=PREVIEW_DISPLAY_WIDTH,
-        height=PREVIEW_DISPLAY_HEIGHT,
-        color_mode="BW",
+        model="ESL-4.2-BW",
+        width=NATIVE_DEFAULT_WIDTH,
+        height=NATIVE_DEFAULT_HEIGHT,
+        color_mode="BWR",
         supports_qr=True,
     )
 
 
 def _profile_for_display(profile: DeviceProfile) -> DeviceProfile:
-    """Scale to a large canvas so dashboard previews have bold, readable type."""
-    aspect = profile.width / profile.height if profile.height else 4 / 3
-    if aspect >= 1.2:
-        width = PREVIEW_DISPLAY_WIDTH
-        height = max(int(width / aspect), 200)
-    else:
-        height = PREVIEW_DISPLAY_HEIGHT
-        width = max(int(height * aspect), 200)
-    return profile.model_copy(update={"width": width, "height": height})
+    """Scale to 2× native so dashboard previews match design mockups."""
+    scale = 2
+    return profile.model_copy(
+        update={
+            "width": max(profile.width * scale, PREVIEW_DISPLAY_WIDTH // 2),
+            "height": max(profile.height * scale, PREVIEW_DISPLAY_HEIGHT // 2),
+            "supports_qr": True,
+        }
+    )
 
 
 def resolve_label_context(

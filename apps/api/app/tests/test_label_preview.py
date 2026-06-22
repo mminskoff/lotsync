@@ -106,4 +106,4 @@ def test_render_vehicle_label_png_with_paired_device(preview_dealership_id):
     db.close()
 
     image = Image.open(__import__("io").BytesIO(png_bytes))
-    assert image.size == (800, 533)
+    assert image.size == (960, 640)

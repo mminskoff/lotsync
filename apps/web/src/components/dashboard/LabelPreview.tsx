@@ -18,7 +18,7 @@ export function LabelPreview({
   const src = useMemo(() => {
     const params = new URLSearchParams({
       dealershipId,
-      v: "2",
+          v: "3",
     });
     return `/api/label-preview/${vehicleId}?${params.toString()}`;
   }, [vehicleId, dealershipId]);

@@ -33,6 +33,24 @@ def _display_price(vehicle: Vehicle) -> Decimal | None:
     return vehicle.displayed_price or vehicle.source_price or vehicle.website_verified_price
 
 
+def _previous_price(vehicle: Vehicle) -> str | None:
+    current = vehicle.displayed_price or vehicle.source_price
+    if (
+        vehicle.source_price is not None
+        and current is not None
+        and vehicle.source_price > current
+    ):
+        return format_price(vehicle.source_price)
+    return None
+
+
+def _specs_line(vehicle: Vehicle) -> str | None:
+    parts: list[str] = []
+    if vehicle.mileage is not None:
+        parts.append(f"{format_mileage(vehicle.mileage)} mi")
+    return " · ".join(parts) if parts else None
+
+
 def build_label_payload(
     vehicle: Vehicle,
     *,
@@ -54,6 +72,8 @@ def build_label_payload(
         status=(vehicle.status or "available").lower(),
         qr_url=vehicle.vehicle_url,
         disclaimer=resolved_disclaimer,
+        previous_price=_previous_price(vehicle),
+        specs_line=_specs_line(vehicle),
     )
 
 
