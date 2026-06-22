@@ -21,6 +21,8 @@ curl -X POST http://127.0.0.1:8000/api/v1/sync-events/process \
 
 ## Railway — second service
 
+Use `apps/api/railway.worker.toml` as reference when creating the worker service.
+
 1. In the LotSync Railway project, click **New** → **Service** → **GitHub Repo** → same `lotsync` repo.
 2. Set **Root Directory** to `apps/api`.
 3. Set **Start Command**:
