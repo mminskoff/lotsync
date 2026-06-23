@@ -1,5 +1,24 @@
 # Inventory sync (scheduled)
 
+## Nielsen workbook on Railway
+
+Inventory sources must not point at your Mac Downloads folder. The deployable copy lives at:
+
+```
+apps/api/data/nielsen-ddc.xlsx
+```
+
+After copying a new export there, update DB paths once:
+
+```bash
+cd apps/api
+PYTHONPATH=. .venv/bin/python scripts/fix_nielsen_workbook_paths.py
+```
+
+Then commit, push, and redeploy Railway so the file ships with the API.
+
+Optional env override on Railway: `NIELSEN_WORKBOOK_PATH=data/nielsen-ddc.xlsx`
+
 ## Manual sync
 
 ```bash

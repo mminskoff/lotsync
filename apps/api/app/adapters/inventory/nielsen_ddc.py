@@ -5,6 +5,7 @@ from pathlib import Path
 from openpyxl import load_workbook
 
 from app.adapters.inventory.base import InventoryAdapter
+from app.adapters.inventory.workbook_paths import resolve_workbook_path
 from app.schemas.normalized_vehicle import NormalizedVehicle
 
 _STATUS_MAP = {
@@ -85,11 +86,7 @@ class NielsenDDCAdapter(InventoryAdapter):
 
     def test_connection(self, config: dict) -> None:
         file_path = config.get("file_path")
-        if not file_path:
-            raise ValueError("config.file_path is required for Nielsen DDC imports")
-        path = Path(file_path)
-        if not path.is_file():
-            raise FileNotFoundError(f"Nielsen workbook not found: {path}")
+        path = resolve_workbook_path(file_path)
 
         sheet_name = config.get("sheet_name")
         workbook = load_workbook(path, read_only=True, data_only=True)
@@ -130,7 +127,7 @@ class NielsenDDCAdapter(InventoryAdapter):
         self, dealership_id: uuid.UUID, config: dict
     ) -> list[NormalizedVehicle]:
         self.test_connection(config)
-        path = Path(config["file_path"])
+        path = resolve_workbook_path(config.get("file_path"))
         source_type = config.get("source_type", "nielsen")
 
         workbook = load_workbook(path, read_only=True, data_only=True)
