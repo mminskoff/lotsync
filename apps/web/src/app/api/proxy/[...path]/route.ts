@@ -23,6 +23,10 @@ async function proxyRequest(
   if (contentType) {
     headers.set("Content-Type", contentType);
   }
+  const authorization = request.headers.get("Authorization");
+  if (authorization) {
+    headers.set("Authorization", authorization);
+  }
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
 

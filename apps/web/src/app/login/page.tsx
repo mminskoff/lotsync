@@ -7,14 +7,6 @@ import { LogoMark } from "@/components/brand/LogoMark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { roleLabel, type LotRole } from "@/lib/auth-storage";
 import { useAuth } from "@/providers/AuthProvider";
 
 function LoginForm() {
@@ -23,7 +15,6 @@ function LoginForm() {
   const { session, isReady, signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<LotRole>("lot_staff");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -46,11 +37,11 @@ function LoginForm() {
     setError(null);
     setSubmitting(true);
     try {
-      signIn(email, password, role);
+      const signedIn = await signIn(email, password);
       const dest =
         next !== "/pairing" && next !== "/login"
           ? next
-          : role === "lot_staff"
+          : signedIn.role === "lot_staff"
             ? "/pairing"
             : "/dashboard";
       router.replace(dest);
@@ -99,20 +90,6 @@ function LoginForm() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
-              <Select value={role} onValueChange={(v) => setRole(v as LotRole)}>
-                <SelectTrigger id="role" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="lot_staff">{roleLabel("lot_staff")}</SelectItem>
-                  <SelectItem value="manager">{roleLabel("manager")}</SelectItem>
-                  <SelectItem value="owner">{roleLabel("owner")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {error ? (
               <p className="text-sm text-destructive" role="alert">
                 {error}
@@ -125,7 +102,7 @@ function LoginForm() {
           </form>
 
           <p className="mt-4 text-center text-xs text-muted-foreground">
-            Dev sign-in — any password works until Supabase Auth is wired.
+            Use the email and password from your LotSync account.
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@ import {
   getDealershipId,
   getDefaultDealershipId,
 } from "@/lib/dealership-storage";
+import { createClient } from "@/lib/supabase/client";
 
 const API_PREFIX = "/api/v1";
 const API_PROXY_PREFIX = "/api/proxy";
@@ -42,6 +43,15 @@ function resolveDealershipId(override?: string): string {
   return id;
 }
 
+async function getAccessToken(): Promise<string | null> {
+  if (typeof window === "undefined") {
+    return null;
+  }
+  const supabase = createClient();
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
+}
+
 export async function apiFetch<T>(
   path: string,
   options: {
@@ -57,6 +67,11 @@ export async function apiFetch<T>(
 
   if (body !== undefined) {
     headers["Content-Type"] = "application/json";
+  }
+
+  const accessToken = await getAccessToken();
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
   }
 
   let response: Response;

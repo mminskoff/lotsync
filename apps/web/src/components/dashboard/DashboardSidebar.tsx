@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Car,
   ClipboardList,
+  FileSpreadsheet,
   FileText,
   LayoutGrid,
   Link2,
@@ -12,11 +13,13 @@ import {
   PanelLeftClose,
   Settings,
   Tag,
+  Users,
   Zap,
 } from "lucide-react";
 
 import { LogoMark } from "@/components/brand/LogoMark";
 import { DealershipSwitcher } from "@/components/dashboard/DealershipSwitcher";
+import { canManageUsers } from "@/components/auth/RequireUserManager";
 import { roleLabel } from "@/lib/auth-storage";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/AuthProvider";
@@ -41,6 +44,7 @@ const navGroups: {
       { href: "/dashboard/vehicles", label: "Vehicles", icon: Car },
       { href: "/dashboard/devices", label: "ESL Devices", icon: Tag },
       { href: "/dashboard/assignments", label: "Assignments", icon: ClipboardList },
+      { href: "/dashboard/inventory-sources", label: "Inventory", icon: FileSpreadsheet },
     ],
   },
   {
@@ -121,6 +125,17 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const { session } = useAuth();
 
+  const manageItems = [
+    ...navGroups.find((g) => g.label === "Manage")!.items,
+    ...(session && canManageUsers(session.role)
+      ? [{ href: "/dashboard/users", label: "Team", icon: Users as typeof LayoutGrid }]
+      : []),
+  ];
+
+  const groups = navGroups.map((group) =>
+    group.label === "Manage" ? { ...group, items: manageItems } : group,
+  );
+
   function badgeFor(key: "sync" | "mismatch" | undefined): number | undefined {
     if (key === "sync" && pendingSyncCount > 0) return pendingSyncCount;
     if (key === "mismatch" && mismatchCount > 0) return mismatchCount;
@@ -137,7 +152,7 @@ export function DashboardSidebar({
       <DealershipSwitcher collapsed={collapsed} />
 
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-hidden">
-        {navGroups.map((group) => (
+        {groups.map((group) => (
           <div key={group.label} className="mb-0.5">
             {!collapsed ? (
               <p className="px-2.5 pt-2.5 pb-1 text-[10.5px] font-semibold tracking-wider text-[#566159] uppercase">

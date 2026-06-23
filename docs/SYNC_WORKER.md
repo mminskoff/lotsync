@@ -4,19 +4,20 @@ The sync worker polls Postgres for pending ESL sync events and runs them through
 
 ## Local
 
+From the **`apps/api`** directory (not repo root):
+
 ```bash
 cd apps/api
-source .venv/bin/activate
+source .venv/bin/activate   # if not already active
 
 # One batch
-python -m app.workers.sync_worker --once
+./run-worker.sh --once
 
 # Continuous loop (default 5s interval)
-python -m app.workers.sync_worker
+./run-worker.sh --interval 5
 
-# Manual trigger via API (same logic)
-curl -X POST http://127.0.0.1:8000/api/v1/sync-events/process \
-  -H "X-Dealership-Id: YOUR_DEALERSHIP_UUID"
+# Or without the helper script:
+PYTHONPATH=. python -m app.workers.sync_worker --interval 5
 ```
 
 ## Railway — second service

@@ -28,49 +28,7 @@ function Brackets() {
       <span className={`${corner} top-0 right-0 rounded-tr-[10px] border-b-0 border-l-0`} />
       <span className={`${corner} bottom-0 left-0 rounded-bl-[10px] border-t-0 border-r-0`} />
       <span className={`${corner} bottom-0 right-0 rounded-br-[10px] border-t-0 border-l-0`} />
-      <div className="absolute right-2 left-2 h-0.5 animate-scan-sweep bg-green-400 shadow-[0_0_12px_2px_var(--green-400)]" />
     </div>
-  );
-}
-
-function CamTool({
-  label,
-  onClick,
-  active,
-  children,
-}: {
-  label: string;
-  onClick?: () => void;
-  active?: boolean;
-  children: React.ReactNode;
-}) {
-  const inner = (
-    <>
-      <div
-        className={`flex size-12 items-center justify-center rounded-full ${
-          active ? "bg-white/30" : "bg-white/14"
-        }`}
-      >
-        {children}
-      </div>
-      <span className="text-[11px] text-white/85">{label}</span>
-    </>
-  );
-
-  if (!onClick) {
-    return <div className="flex flex-col items-center gap-1.5">{inner}</div>;
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex flex-col items-center gap-1.5"
-      aria-label={label}
-      aria-pressed={active}
-    >
-      {inner}
-    </button>
   );
 }
 
@@ -270,31 +228,33 @@ export function CameraScanner({
             <Brackets />
           </div>
         )}
+
+        {flashSupported ? (
+          <button
+            type="button"
+            onClick={() => void toggleFlash()}
+            aria-label="Toggle flash"
+            aria-pressed={flashOn}
+            className={`absolute bottom-4 left-4 z-20 flex size-12 items-center justify-center rounded-full ${
+              flashOn ? "bg-white/30" : "bg-black/40"
+            } backdrop-blur-sm`}
+          >
+            <Zap className="size-[22px] text-white" strokeWidth={1.8} />
+          </button>
+        ) : null}
       </div>
 
       <div className="relative z-10 shrink-0 bg-black/80 px-5 pt-4 pb-[max(22px,env(safe-area-inset-bottom))]">
-        <div className="mx-auto grid max-w-[320px] grid-cols-[48px_1fr_48px] items-end gap-3">
-          <div className="flex justify-center">
-            {flashSupported ? (
-              <CamTool label="Flash" onClick={() => void toggleFlash()} active={flashOn}>
-                <Zap className="size-[22px] text-white" strokeWidth={1.8} />
-              </CamTool>
-            ) : null}
-          </div>
-
-          <div className="flex justify-center">
-            <button
-              type="button"
-              disabled={isLoading}
-              onClick={onManual}
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-white/95 px-[18px] text-[13px] font-semibold text-green-900 disabled:opacity-50"
-            >
-              <Keyboard className="size-[18px]" strokeWidth={2} />
-              {manualLabel}
-            </button>
-          </div>
-
-          <div aria-hidden className="size-12" />
+        <div className="flex justify-center">
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={onManual}
+            className="inline-flex h-12 items-center gap-2 rounded-full bg-white/95 px-[18px] text-[13px] font-semibold text-green-900 disabled:opacity-50"
+          >
+            <Keyboard className="size-[18px]" strokeWidth={2} />
+            {manualLabel}
+          </button>
         </div>
       </div>
     </div>

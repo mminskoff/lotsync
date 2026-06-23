@@ -128,14 +128,14 @@ Temporary pairing UI in `apps/web` until `apps/mobile` exists. Validates flows b
 
 Complete in order. Hardware (M9) only swaps renderer/transport adapters.
 
-- [ ] **8.5.1** Deploy sync worker on Railway (second service) — see `railway.worker.toml`
+- [x] **8.5.1** Deploy sync worker on Railway (second service) — see `railway.worker.toml`
 - [x] **8.5.2** `POST /sync-events/process` — manual batch trigger + worker docs
 - [x] **8.5.3** PNG label preview renderer + `GET /vehicles/{id}/label-preview`
 - [x] **8.5.4** Dashboard label preview on vehicle detail page
-- [ ] **8.5.5** Supabase Auth (replace placeholder login)
+- [x] **8.5.5** Supabase Auth (replace placeholder login) — see `docs/SUPABASE_AUTH.md`
 - [x] **8.5.6** Scheduled Nielsen inventory sync — `scripts/sync_all_inventory.py` + `docs/INVENTORY_SYNC.md`
 - [x] **8.5.7** Demo ESL seed for Nielsen rooftops — `scripts/seed_nielsen_esl_demo.py`
-- [ ] **8.5.8** Price mismatch detection rules
+- [x] **8.5.8** Price mismatch detection rules
 
 ## Milestone 9 — Minew Kit
 

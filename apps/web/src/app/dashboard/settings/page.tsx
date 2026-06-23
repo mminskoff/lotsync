@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { DevDealershipIdControl } from "@/components/layout/DevDealershipIdControl";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { canManageUsers } from "@/components/auth/RequireUserManager";
 import { Button } from "@/components/ui/button";
 import { roleLabel } from "@/lib/auth-storage";
 import { useAuth } from "@/providers/AuthProvider";
@@ -17,7 +18,7 @@ export default function DashboardSettingsPage() {
     <>
       <PageHeader
         title="Settings"
-        description="Dealership configuration and dev controls until Supabase Auth is wired."
+        description="Dealership configuration and account settings."
       />
       <div className="mx-auto max-w-lg space-y-6">
         {session ? (
@@ -35,6 +36,18 @@ export default function DashboardSettingsPage() {
               }}
             >
               Sign out
+            </Button>
+          </div>
+        ) : null}
+
+        {session && canManageUsers(session.role) ? (
+          <div className="rounded-2xl border border-border bg-background p-4">
+            <p className="text-sm font-semibold">Team</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Send an email invite — they choose their own password — or create an account manually.
+            </p>
+            <Button variant="default" className="mt-4 w-full" asChild>
+              <Link href="/dashboard/users">Invite team members</Link>
             </Button>
           </div>
         ) : null}

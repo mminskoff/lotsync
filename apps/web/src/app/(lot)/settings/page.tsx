@@ -14,7 +14,7 @@ export default function SettingsPage() {
   const { session, signOut } = useAuth();
 
   return (
-    <DataPageLayout description="Account and dev controls until Supabase Auth is wired.">
+    <DataPageLayout description="Account and dealership settings.">
       <div className="mx-auto max-w-lg space-y-6">
         {session ? (
           <div className="rounded-2xl border border-border bg-background p-4">

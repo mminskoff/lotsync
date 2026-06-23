@@ -9,19 +9,15 @@ import {
   useState,
 } from "react";
 
-import {
-  clearSession,
-  getSession,
-  type LotRole,
-  type LotSession,
-  signInPlaceholder,
-} from "@/lib/auth-storage";
+import { clearLegacySession, type LotSession } from "@/lib/auth-storage";
+import { createClient } from "@/lib/supabase/client";
+import { sessionFromUser } from "@/lib/supabase/session";
 
 interface AuthContextValue {
   session: LotSession | null;
   isReady: boolean;
-  signIn: (email: string, password: string, role: LotRole) => LotSession;
-  signOut: () => void;
+  signIn: (email: string, password: string) => Promise<LotSession>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -31,18 +27,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    setSessionState(getSession());
-    setIsReady(true);
+    clearLegacySession();
+    const supabase = createClient();
+
+    supabase.auth.getSession().then(({ data: { session: initial } }) => {
+      setSessionState(initial?.user ? sessionFromUser(initial.user) : null);
+      setIsReady(true);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSessionState(nextSession?.user ? sessionFromUser(nextSession.user) : null);
+      setIsReady(true);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const signIn = useCallback((email: string, password: string, role: LotRole) => {
-    const next = signInPlaceholder(email, password, role);
+  const signIn = useCallback(async (email: string, password: string) => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed.includes("@")) {
+      throw new Error("Enter a valid email address.");
+    }
+    if (!password.trim()) {
+      throw new Error("Password is required.");
+    }
+
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: trimmed,
+      password,
+    });
+
+    if (error) {
+      throw new Error(error.message);
+    }
+    if (!data.user) {
+      throw new Error("Sign in failed — no user returned.");
+    }
+
+    const next = sessionFromUser(data.user);
     setSessionState(next);
     return next;
   }, []);
 
-  const signOut = useCallback(() => {
-    clearSession();
+  const signOut = useCallback(async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
     setSessionState(null);
   }, []);
 

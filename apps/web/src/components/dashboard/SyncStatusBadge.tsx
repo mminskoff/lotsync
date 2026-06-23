@@ -16,8 +16,7 @@ export function syncStatusVariant(status: string | null | undefined): BadgeVaria
     case "GATEWAY_OFFLINE":
       return "failed";
     case "PRICE_MISMATCH":
-    case "SOURCE_UNVERIFIED":
-      return "pending";
+      return "failed";
     case "OFFLINE":
     case "STALE":
       return "offline";

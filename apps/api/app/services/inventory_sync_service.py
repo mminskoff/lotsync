@@ -10,6 +10,7 @@ from app.models.inventory_sync_run import InventorySyncRun
 from app.schemas.inventory import InventorySyncResult, InventoryTestResult
 from app.services import inventory_source_service
 from app.services.audit_service import log_action
+from app.services.price_mismatch_service import refresh_dealership_price_mismatches
 from app.services.vehicle_upsert_service import upsert_vehicles_from_import
 
 
@@ -78,6 +79,8 @@ def sync_inventory_source_now(
         run.vehicles_off_lot = upsert_result.off_lot
         source.last_success_at = datetime.now(UTC)
         source.last_error = None
+
+        refresh_dealership_price_mismatches(db, dealership_id)
 
         log_action(
             db,
