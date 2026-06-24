@@ -20,6 +20,7 @@ export function sessionFromUser(user: User): LotSession {
   const role = parseRole(user.app_metadata?.role ?? user.user_metadata?.role);
 
   return {
+    id: user.id,
     email,
     displayName: displayNameFromEmail(email),
     role,

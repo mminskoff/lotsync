@@ -19,6 +19,13 @@ function LoginForm() {
   const [submitting, setSubmitting] = useState(false);
 
   const next = searchParams.get("next") ?? "/pairing";
+  const queryError = searchParams.get("error");
+
+  useEffect(() => {
+    if (queryError) {
+      setError(queryError);
+    }
+  }, [queryError]);
 
   useEffect(() => {
     if (isReady && session) {

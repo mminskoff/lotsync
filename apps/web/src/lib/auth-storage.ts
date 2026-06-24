@@ -1,6 +1,7 @@
 export type LotRole = "owner" | "manager" | "lot_staff";
 
 export interface LotSession {
+  id: string;
   email: string;
   displayName: string;
   role: LotRole;

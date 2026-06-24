@@ -16,16 +16,40 @@ export default function SetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [ready, setReady] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace("/login");
+
+    async function loadSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setEmail(session.user.email);
+        setReady(true);
         return;
       }
-      setReady(true);
-    });
+
+      const gotSession = await new Promise<boolean>((resolve) => {
+        const timeout = window.setTimeout(() => resolve(false), 4000);
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+          if (nextSession?.user?.email) {
+            setEmail(nextSession.user.email);
+            setReady(true);
+            window.clearTimeout(timeout);
+            subscription.unsubscribe();
+            resolve(true);
+          }
+        });
+      });
+
+      if (!gotSession) {
+        router.replace("/login?error=Invite+session+expired.+Use+a+fresh+invite+link.");
+      }
+    }
+
+    void loadSession();
   }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -75,7 +99,7 @@ export default function SetPasswordPage() {
             <LogoMark size="md" />
             <h1 className="mt-4 text-2xl font-semibold tracking-tight">Set your password</h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Choose a password for your LotSync account.
+              {email ? `Create a password for ${email}` : "Choose a password for your LotSync account."}
             </p>
           </div>
 
@@ -116,6 +140,10 @@ export default function SetPasswordPage() {
               {submitting ? "Saving…" : "Save password & continue"}
             </Button>
           </form>
+
+          <p className="mt-4 text-center text-xs text-muted-foreground">
+            Use this same password at /login next time you sign in.
+          </p>
         </div>
       </div>
     </div>

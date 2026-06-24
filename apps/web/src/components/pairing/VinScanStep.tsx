@@ -83,8 +83,8 @@ export function VinScanStep({
       <CameraScanner
         target="vin"
         stepLabel="Step 1 of 2 · Vehicle"
-        hint="Point at the VIN barcode"
-        subhint="Windshield or driver door jamb"
+        hint="Point at the VIN barcode or QR code"
+        subhint="Windshield or driver door jamb — scans automatically"
         manualLabel="Enter manually"
         isLoading={isLoading}
         onScan={onSubmit}

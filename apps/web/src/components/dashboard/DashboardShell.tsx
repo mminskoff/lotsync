@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Input } from "@/components/ui/input";
 import { DashboardBrandBar, DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { RooftopSwitcher } from "@/components/dealership/RooftopSwitcher";
 import { useDashboard } from "@/providers/DashboardDataProvider";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           )}
         </div>
         <div className="flex min-h-0 min-w-0 flex-col overflow-hidden">
+          <div className="shrink-0 border-b border-border/80 bg-app-bg/85 px-4 py-2.5 backdrop-blur-md lg:hidden">
+            <RooftopSwitcher variant="mobile" settingsHref="/dashboard/settings" />
+          </div>
           <div className="flex h-[62px] shrink-0 items-center gap-4 border-b border-border/80 bg-app-bg/85 px-6 backdrop-blur-md lg:px-7">
             <DashboardSidebarMobile pendingSyncCount={pendingBadge} />
             <div className="relative ml-auto hidden w-[280px] sm:block">

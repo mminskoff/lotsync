@@ -20,3 +20,8 @@ UPDATE dealerships
 SET organization_id = '00000000-0000-4000-8000-000000000001'
 WHERE slug = 'nielsen-ford-morristown'
   AND organization_id IS NULL;
+
+ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE organizations FORCE ROW LEVEL SECURITY;
+CREATE POLICY organizations_deny_api ON organizations
+  FOR ALL TO anon, authenticated USING (false) WITH CHECK (false);

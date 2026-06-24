@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { DevDealershipIdControl } from "@/components/layout/DevDealershipIdControl";
 import { PageHeader } from "@/components/dashboard/PageHeader";
+import { RooftopSwitcher } from "@/components/dealership/RooftopSwitcher";
 import { canManageUsers } from "@/components/auth/RequireUserManager";
 import { Button } from "@/components/ui/button";
 import { roleLabel } from "@/lib/auth-storage";
@@ -26,6 +27,9 @@ export default function DashboardSettingsPage() {
             <p className="text-sm font-semibold">{session.displayName}</p>
             <p className="text-sm text-muted-foreground">{session.email}</p>
             <p className="mt-1 text-xs text-muted-foreground">{roleLabel(session.role)}</p>
+            <div className="mt-3">
+              <RooftopSwitcher variant="mobile" settingsHref="/dashboard/settings" />
+            </div>
             <Button
               type="button"
               variant="outline"
@@ -53,14 +57,6 @@ export default function DashboardSettingsPage() {
         ) : null}
 
         <DevDealershipIdControl />
-
-        <div className="rounded-2xl border border-border bg-background p-4 text-sm text-muted-foreground">
-          <p className="font-medium text-foreground">Inventory sources</p>
-          <p className="mt-1">
-            Reynolds &amp; Reynolds and other DMS adapters arrive in Milestone 7. Connect feeds
-            here once adapters are live.
-          </p>
-        </div>
 
         <Button variant="outline" className="w-full" asChild>
           <Link href="/pairing">Open lot pairing app</Link>

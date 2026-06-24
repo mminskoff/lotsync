@@ -14,11 +14,13 @@ import {
   getDefaultDealershipId,
   getOrganizationId,
   getRooftopScope,
+  getStoredDealershipId,
   setDealershipId,
   setOrganizationId,
   setRooftopScope,
   type RooftopScope,
 } from "@/lib/dealership-storage";
+import { listAccessibleDealerships } from "@/lib/dealershipsApi";
 
 export interface RooftopSelection {
   organizationId: string | null;
@@ -57,17 +59,56 @@ export function DealershipProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     const fromEnv = getDefaultDealershipId();
-    const stored = getDealershipId();
+    const stored = getStoredDealershipId();
     const resolved = stored || fromEnv;
+    const scope = getRooftopScope();
+    const orgId = getOrganizationId() || null;
+
     if (!stored && fromEnv) {
-      setDealershipId(fromEnv);
+      setDealershipId(fromEnv, { custom: false });
     }
     setId(resolved);
-    setScope(getRooftopScope());
-    setOrgId(getOrganizationId() || null);
-    if (getRooftopScope() === "single" && resolved) {
-      setDealershipIds([resolved]);
+    setScope(scope);
+    setOrgId(orgId);
+
+    if (!resolved) {
+      return;
     }
+
+    if (scope === "single") {
+      setDealershipIds([resolved]);
+      return;
+    }
+
+    let cancelled = false;
+
+    void listAccessibleDealerships(resolved)
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+        const group =
+          (orgId
+            ? response.groups.find((item) => item.organization_id === orgId)
+            : null) ??
+          response.groups.find((item) =>
+            item.dealerships.some((dealer) => dealer.id === resolved),
+          );
+        if (group) {
+          setDealershipIds(group.dealerships.map((dealer) => dealer.id));
+        } else {
+          setDealershipIds([resolved]);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDealershipIds([resolved]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const setRooftopSelection = useCallback((selection: RooftopSelection) => {

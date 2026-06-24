@@ -152,13 +152,18 @@ export async function deleteDealershipUser(input: {
 }
 
 function appUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (explicit) {
-    return explicit;
-  }
-  const vercel = process.env.VERCEL_URL;
-  if (vercel) {
-    return `https://${vercel.replace(/\/$/, "")}`;
+  for (const candidate of [
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.APP_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : undefined,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+  ]) {
+    const trimmed = candidate?.trim().replace(/\/$/, "");
+    if (trimmed) {
+      return trimmed;
+    }
   }
   return "http://localhost:3000";
 }

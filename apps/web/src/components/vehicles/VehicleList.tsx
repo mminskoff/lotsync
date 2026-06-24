@@ -13,32 +13,42 @@ import type { VehicleWithAssignment } from "@/lib/types/vehicle";
 import { useDealership } from "@/providers/DealershipProvider";
 
 export function VehicleList() {
-  const { dealershipId } = useDealership();
+  const { dealershipId, dealershipIds, rooftopScope } = useDealership();
   const [vehicles, setVehicles] = useState<VehicleWithAssignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!dealershipId) {
+    const ids =
+      dealershipIds.length > 0 ? dealershipIds : dealershipId ? [dealershipId] : [];
+
+    if (ids.length === 0) {
       setVehicles([]);
       setIsLoading(false);
-      setError("Set a Dev Dealership ID in settings to load vehicles.");
+      setError("Set a dealership in Settings to load vehicles.");
       return;
     }
 
     let cancelled = false;
 
+    async function loadForDealership(id: string) {
+      const [vehicleRows, pairings] = await Promise.all([
+        listVehicles({ dealershipId: id }),
+        listActivePairings({ dealershipId: id }),
+      ]);
+      return { vehicleRows, pairings };
+    }
+
     async function load() {
       setIsLoading(true);
       setError(null);
       try {
-        const [vehicleRows, pairings] = await Promise.all([
-          listVehicles(),
-          listActivePairings(),
-        ]);
+        const batches = await Promise.all(ids.map((id) => loadForDealership(id)));
+        const vehicleRows = batches.flatMap((batch) => batch.vehicleRows);
+        const pairings = batches.flatMap((batch) => batch.pairings.pairings);
 
         const assignmentByVehicle = new Map(
-          pairings.pairings.map((pairing) => [
+          pairings.map((pairing) => [
             pairing.vehicle.id,
             {
               deviceCode: pairing.device.device_id,
@@ -74,7 +84,7 @@ export function VehicleList() {
     return () => {
       cancelled = true;
     };
-  }, [dealershipId]);
+  }, [dealershipId, dealershipIds, rooftopScope]);
 
   if (isLoading) {
     return (

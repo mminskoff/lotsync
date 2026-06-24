@@ -16,10 +16,14 @@ Requires `SUPABASE_SERVICE_ROLE_KEY` in Vercel / `apps/web/.env.local` (server-o
 
 ### Supabase redirect URLs (required for email invites)
 
-In Supabase → **Authentication** → **URL Configuration**, add these to **Redirect URLs**:
+In Supabase → **Authentication** → **URL Configuration**:
 
-- `https://lotsync-chi.vercel.app/auth/callback`
-- `http://localhost:3000/auth/callback`
+- **Site URL:** `https://lotsync-chi.vercel.app` (not localhost)
+- **Redirect URLs** — add:
+  - `https://lotsync-chi.vercel.app/auth/callback`
+  - `http://localhost:3000/auth/callback`
+
+If Site URL is `http://localhost:3000`, invite links will redirect there even from production.
 
 **Bootstrap:** the first owner must be created in the Supabase dashboard (see below). After that, owners can invite everyone from the UI.
 
@@ -52,6 +56,7 @@ Lot staff are routed to `/pairing` after login; managers and owners go to `/dash
 | Variable | Description |
 |----------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Project URL |
+| `NEXT_PUBLIC_APP_URL` | `https://lotsync-chi.vercel.app` (required for invite emails) |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable (anon) key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-only, for Users admin page) |
 

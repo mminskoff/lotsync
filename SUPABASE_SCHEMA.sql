@@ -185,6 +185,14 @@ CREATE TABLE audit_logs (
 CREATE INDEX idx_audit_logs_dealership_id ON audit_logs (dealership_id);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs (dealership_id, created_at DESC);
 
+-- organizations (dealer groups)
+CREATE TABLE organizations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Row Level Security (draft — policies expand when Supabase Auth is wired)
 ALTER TABLE dealerships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -196,6 +204,7 @@ ALTER TABLE sync_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE label_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rendered_labels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
 
 -- Deny direct API access until auth policies are added (backend uses postgres connection)
 CREATE POLICY dealerships_deny_api ON dealerships FOR ALL TO anon, authenticated USING (false);
@@ -208,3 +217,7 @@ CREATE POLICY sync_events_deny_api ON sync_events FOR ALL TO anon, authenticated
 CREATE POLICY label_templates_deny_api ON label_templates FOR ALL TO anon, authenticated USING (false);
 CREATE POLICY rendered_labels_deny_api ON rendered_labels FOR ALL TO anon, authenticated USING (false);
 CREATE POLICY audit_logs_deny_api ON audit_logs FOR ALL TO anon, authenticated USING (false);
+CREATE POLICY organizations_deny_api ON organizations FOR ALL TO anon, authenticated USING (false);
+
+-- Signed-in users may read their own profile row (dealership bootstrap in web app)
+CREATE POLICY users_select_own ON users FOR SELECT TO authenticated USING (id = auth.uid());

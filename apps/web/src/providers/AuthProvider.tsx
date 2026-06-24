@@ -63,6 +63,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("invalid login credentials")) {
+        throw new Error(
+          "Invalid email or password. If you were invited, open the invite email, set your password, then sign in with that password.",
+        );
+      }
       throw new Error(error.message);
     }
     if (!data.user) {

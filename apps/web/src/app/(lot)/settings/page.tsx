@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { DevDealershipIdControl } from "@/components/layout/DevDealershipIdControl";
 import { DataPageLayout } from "@/components/layout/DataPageLayout";
+import { RooftopSwitcher } from "@/components/dealership/RooftopSwitcher";
 import { Button } from "@/components/ui/button";
 import { roleLabel } from "@/lib/auth-storage";
 import { useAuth } from "@/providers/AuthProvider";
@@ -21,6 +22,9 @@ export default function SettingsPage() {
             <p className="text-sm font-semibold">{session.displayName}</p>
             <p className="text-sm text-muted-foreground">{session.email}</p>
             <p className="mt-1 text-xs text-muted-foreground">{roleLabel(session.role)}</p>
+            <div className="mt-3">
+              <RooftopSwitcher variant="mobile" settingsHref="/settings" />
+            </div>
             <Button
               type="button"
               variant="outline"

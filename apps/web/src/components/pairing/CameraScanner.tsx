@@ -67,8 +67,13 @@ export function CameraScanner({
   onScanRef.current = onScan;
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(true);
+  const [scanning, setScanning] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [flashSupported, setFlashSupported] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
+  const readerRef = useRef<InstanceType<
+    Awaited<typeof import("@zxing/browser")>["BrowserMultiFormatReader"]
+  > | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +96,7 @@ export function CameraScanner({
         if (cancelled) return;
 
         const reader = new BrowserMultiFormatReader(hints, { delayBetweenScanAttempts: 150 });
+        readerRef.current = reader;
 
         const controls = await reader.decodeFromConstraints(
           {
@@ -107,11 +113,18 @@ export function CameraScanner({
             if (scanError && !(scanError instanceof NotFoundException)) {
               return;
             }
-            if (!result) return;
+            if (!result) {
+              setScanning(true);
+              return;
+            }
 
             const parsed = parseScanPayload(result.getText(), target);
-            if (!parsed) return;
+            if (!parsed) {
+              setScanning(true);
+              return;
+            }
 
+            setScanning(false);
             handledRef.current = true;
             controls.stop();
             onScanRef.current(parsed.value, parsed.method);
@@ -139,6 +152,7 @@ export function CameraScanner({
         }
 
         setStarting(false);
+        setScanning(true);
         setError(null);
       } catch {
         if (!cancelled) {
@@ -153,6 +167,7 @@ export function CameraScanner({
       cancelled = true;
       controlsRef.current?.stop();
       controlsRef.current = null;
+      readerRef.current = null;
       const video = videoRef.current;
       if (video?.srcObject instanceof MediaStream) {
         video.srcObject.getTracks().forEach((track) => track.stop());
@@ -179,6 +194,49 @@ export function CameraScanner({
     }
   }, [flashOn, flashSupported]);
 
+  const captureFrame = useCallback(async () => {
+    if (handledRef.current || capturing || isLoading) {
+      return;
+    }
+
+    const video = videoRef.current;
+    const reader = readerRef.current;
+    if (!video || !reader || video.videoWidth === 0) {
+      return;
+    }
+
+    setCapturing(true);
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        return;
+      }
+      context.drawImage(video, 0, 0);
+
+      const image = new Image();
+      image.src = canvas.toDataURL("image/jpeg", 0.92);
+      await image.decode();
+
+      const result = await reader.decodeFromImageElement(image);
+      const parsed = parseScanPayload(result.getText(), target);
+      if (!parsed) {
+        setError("No barcode found — hold steady and try again, or enter manually.");
+        return;
+      }
+
+      handledRef.current = true;
+      controlsRef.current?.stop();
+      onScanRef.current(parsed.value, parsed.method);
+    } catch {
+      setError("No barcode found — hold steady and try again, or enter manually.");
+    } finally {
+      setCapturing(false);
+    }
+  }, [capturing, isLoading, target]);
+
   const vehicleTitle = vehicle ? formatVehicleTitle(vehicle) : null;
 
   return (
@@ -204,9 +262,18 @@ export function CameraScanner({
           </div>
         ) : null}
 
-        <p className="px-8 pt-1.5 text-center text-sm font-medium text-white/92">{error ?? hint}</p>
+        <p className="px-8 pt-1.5 text-center text-sm font-medium text-white/92">
+          {error ?? hint}
+        </p>
         {subhint && !error ? (
-          <p className="px-8 pt-0.5 pb-1 text-center text-xs font-normal text-white/70">{subhint}</p>
+          <p className="px-8 pt-0.5 pb-1 text-center text-xs font-normal text-white/70">
+            {subhint}
+          </p>
+        ) : null}
+        {!error && !starting ? (
+          <p className="px-8 pb-1 text-center text-[11px] font-medium text-white/55">
+            Auto-detects barcodes and QR codes — no button needed
+          </p>
         ) : null}
       </div>
 
@@ -224,8 +291,14 @@ export function CameraScanner({
             <div className="size-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
           </div>
         ) : error ? null : (
-          <div className="pointer-events-none relative z-10">
+          <div className="pointer-events-none relative z-10 flex flex-col items-center gap-3">
             <Brackets />
+            {scanning ? (
+              <div className="flex items-center gap-2 rounded-full bg-black/45 px-3 py-1.5 text-[11px] font-semibold text-white/90">
+                <span className="size-2 animate-pulse rounded-full bg-green-400" />
+                Scanning…
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -245,16 +318,28 @@ export function CameraScanner({
       </div>
 
       <div className="relative z-10 shrink-0 bg-black/80 px-5 pt-4 pb-[max(22px,env(safe-area-inset-bottom))]">
-        <div className="flex justify-center">
-          <button
-            type="button"
-            disabled={isLoading}
-            onClick={onManual}
-            className="inline-flex h-12 items-center gap-2 rounded-full bg-white/95 px-[18px] text-[13px] font-semibold text-green-900 disabled:opacity-50"
-          >
-            <Keyboard className="size-[18px]" strokeWidth={2} />
-            {manualLabel}
-          </button>
+        <div className="flex flex-col gap-2.5">
+          {!error ? (
+            <button
+              type="button"
+              disabled={isLoading || capturing || starting}
+              onClick={() => void captureFrame()}
+              className="inline-flex h-12 w-full items-center justify-center rounded-full bg-white text-[13px] font-semibold text-green-900 disabled:opacity-50"
+            >
+              {capturing ? "Reading…" : "Tap to scan"}
+            </button>
+          ) : null}
+          <div className="flex justify-center">
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={onManual}
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-white/95 px-[18px] text-[13px] font-semibold text-green-900 disabled:opacity-50"
+            >
+              <Keyboard className="size-[18px]" strokeWidth={2} />
+              {manualLabel}
+            </button>
+          </div>
         </div>
       </div>
     </div>
