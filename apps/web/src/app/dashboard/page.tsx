@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-import { DashboardAuditTable } from "@/components/dashboard/DashboardAuditTable";
+import { InventorySnapshotCard } from "@/components/dashboard/InventorySnapshotCard";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { SyncStatusBadge } from "@/components/dashboard/SyncStatusBadge";
@@ -13,7 +13,7 @@ import { formatDateTime, formatVehicleLabel } from "@/lib/format";
 import { useDashboard } from "@/providers/DashboardDataProvider";
 
 export default function DashboardHomePage() {
-  const { overview, vehicles, syncEvents, auditLogs, isLoading, error } = useDashboard();
+  const { overview, vehicles, auditLogs, isLoading, error } = useDashboard();
 
   const needsAttention = vehicles.filter((v) => {
     const s = v.sync_status?.toUpperCase();
@@ -91,11 +91,7 @@ export default function DashboardHomePage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-background p-5 shadow-sm">
-          <h2 className="mb-3 font-semibold">Sync queue</h2>
-          <p className="text-3xl font-semibold">{syncEvents.length}</p>
-          <p className="mt-1 text-sm text-muted-foreground">Total sync events recorded</p>
-        </div>
+        <InventorySnapshotCard vehicleCount={overview.totalVehicles} />
       </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-2">

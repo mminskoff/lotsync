@@ -55,7 +55,7 @@ export function LotShell({ children }: { children: React.ReactNode }) {
 
       {!dealershipId ? (
         <div className="border-b border-[#f0dca8] bg-status-pending/15 px-4 py-2 text-center text-xs font-medium text-status-pending">
-          Set your rooftop in Settings before pairing.
+          Select a rooftop in Settings before pairing.
         </div>
       ) : null}
 

@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { RooftopSwitcher } from "@/components/dealership/RooftopSwitcher";
 import { canManageUsers } from "@/components/auth/RequireUserManager";
 import { Button } from "@/components/ui/button";
-import { roleLabel } from "@/lib/auth-storage";
+import { canUseDevDealershipId, roleLabel } from "@/lib/auth-storage";
 import { useAuth } from "@/providers/AuthProvider";
 
 export default function DashboardSettingsPage() {
@@ -56,7 +56,7 @@ export default function DashboardSettingsPage() {
           </div>
         ) : null}
 
-        <DevDealershipIdControl />
+        {session && canUseDevDealershipId(session.role) ? <DevDealershipIdControl /> : null}
 
         <Button variant="outline" className="w-full" asChild>
           <Link href="/pairing">Open lot pairing app</Link>

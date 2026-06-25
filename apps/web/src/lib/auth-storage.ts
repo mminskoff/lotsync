@@ -35,3 +35,7 @@ export function roleLabel(role: LotRole): string {
       return "Lot staff";
   }
 }
+
+export function canUseDevDealershipId(role: LotRole | undefined): boolean {
+  return role === "owner";
+}

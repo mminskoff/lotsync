@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Search } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { VehicleCard } from "@/components/vehicles/VehicleCard";
 import { VehicleTable } from "@/components/vehicles/VehicleTable";
@@ -12,11 +14,27 @@ import { ApiError } from "@/lib/api";
 import type { VehicleWithAssignment } from "@/lib/types/vehicle";
 import { useDealership } from "@/providers/DealershipProvider";
 
+function matchesQuery(vehicle: VehicleWithAssignment, query: string): boolean {
+  const haystack = [
+    vehicle.vin,
+    vehicle.stock_number,
+    vehicle.make,
+    vehicle.model,
+    vehicle.trim,
+    vehicle.assigned_esl,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return haystack.includes(query);
+}
+
 export function VehicleList() {
   const { dealershipId, dealershipIds, rooftopScope } = useDealership();
   const [vehicles, setVehicles] = useState<VehicleWithAssignment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const ids =
@@ -25,7 +43,7 @@ export function VehicleList() {
     if (ids.length === 0) {
       setVehicles([]);
       setIsLoading(false);
-      setError("Set a dealership in Settings to load vehicles.");
+      setError("Select a rooftop in Settings to load vehicles.");
       return;
     }
 
@@ -86,10 +104,18 @@ export function VehicleList() {
     };
   }, [dealershipId, dealershipIds, rooftopScope]);
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredVehicles = useMemo(() => {
+    if (!normalizedQuery) {
+      return vehicles;
+    }
+    return vehicles.filter((vehicle) => matchesQuery(vehicle, normalizedQuery));
+  }, [vehicles, normalizedQuery]);
+
   if (isLoading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-28 w-full" />
+        <Skeleton className="h-12 w-full" />
         <Skeleton className="h-28 w-full" />
         <Skeleton className="h-28 w-full" />
       </div>
@@ -105,27 +131,46 @@ export function VehicleList() {
     );
   }
 
-  if (vehicles.length === 0) {
-    return (
-      <Alert>
-        <AlertTitle>No vehicles</AlertTitle>
-        <AlertDescription>
-          No inventory found for this dealership.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   return (
     <>
-      <div className="grid gap-3 md:hidden">
-        {vehicles.map((vehicle) => (
-          <VehicleCard key={vehicle.id} vehicle={vehicle} />
-        ))}
+      <div className="relative mb-4">
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search VIN, stock #, make, model, or tag…"
+          className="h-12 rounded-xl bg-background pl-10"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+        />
       </div>
-      <div className="hidden md:block">
-        <VehicleTable vehicles={vehicles} />
-      </div>
+
+      {vehicles.length === 0 ? (
+        <Alert>
+          <AlertTitle>No vehicles</AlertTitle>
+          <AlertDescription>No inventory found for this rooftop.</AlertDescription>
+        </Alert>
+      ) : filteredVehicles.length === 0 ? (
+        <Alert>
+          <AlertTitle>No matches</AlertTitle>
+          <AlertDescription>Try a different VIN, stock number, or tag code.</AlertDescription>
+        </Alert>
+      ) : (
+        <>
+          <p className="mb-3 text-xs text-muted-foreground">
+            {filteredVehicles.length} of {vehicles.length} vehicles
+          </p>
+          <div className="grid gap-3 md:hidden">
+            {filteredVehicles.map((vehicle) => (
+              <VehicleCard key={vehicle.id} vehicle={vehicle} />
+            ))}
+          </div>
+          <div className="hidden md:block">
+            <VehicleTable vehicles={filteredVehicles} />
+          </div>
+        </>
+      )}
     </>
   );
 }

@@ -7,7 +7,7 @@ import { DevDealershipIdControl } from "@/components/layout/DevDealershipIdContr
 import { DataPageLayout } from "@/components/layout/DataPageLayout";
 import { RooftopSwitcher } from "@/components/dealership/RooftopSwitcher";
 import { Button } from "@/components/ui/button";
-import { roleLabel } from "@/lib/auth-storage";
+import { canUseDevDealershipId, roleLabel } from "@/lib/auth-storage";
 import { useAuth } from "@/providers/AuthProvider";
 
 export default function SettingsPage() {
@@ -39,7 +39,7 @@ export default function SettingsPage() {
           </div>
         ) : null}
 
-        <DevDealershipIdControl />
+        {session && canUseDevDealershipId(session.role) ? <DevDealershipIdControl /> : null}
         <Button variant="outline" className="h-12 w-full" asChild>
           <Link href="/pairing">Back to pairing</Link>
         </Button>
