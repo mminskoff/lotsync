@@ -41,12 +41,14 @@ export function EslScanStep({
           ← Use camera
         </button>
         <h2 className="text-[17px] font-semibold">Enter tag ID</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Type the code printed on the ESL tag.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Type the full code printed on the tag (include any rooftop prefix).
+        </p>
 
         <div className="mt-6">
           <ManualEntryInput
             label="ESL tag code"
-            placeholder="e.g. ESL-002"
+            placeholder="e.g. DOVERDO-ESL-009"
             value={value}
             onValueChange={onValueChange}
             isLoading={isLoading}
@@ -80,8 +82,9 @@ export function EslScanStep({
       <CameraScanner
         target="esl"
         stepLabel="Step 2 of 2 · Tag"
-        hint="Point at the tag on the windshield"
-        manualLabel="Enter tag ID"
+        hint="Point at the QR code on the ESL tag"
+        subhint="No QR? Enter the full tag ID manually"
+        manualLabel="Enter tag ID manually"
         vehicle={vehicleLookup.vehicle}
         isLoading={isLoading}
         onScan={onSubmit}

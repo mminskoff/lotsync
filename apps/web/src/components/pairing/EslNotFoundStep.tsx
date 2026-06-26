@@ -37,7 +37,8 @@ export function EslNotFoundStep({
         </div>
         <h3 className="text-[21px] font-semibold tracking-tight">Unknown tag</h3>
         <p className="mt-2 max-w-[30ch] text-[13.5px] leading-relaxed text-muted-foreground">
-          This ESL isn&apos;t registered yet, or the scan failed to read.
+          This ESL isn&apos;t registered yet, the scan failed, or the code was incomplete. Enter the
+          full tag ID (e.g. DOVERDO-ESL-009).
         </p>
         <div className="mt-4 rounded-[10px] border border-border bg-background px-3.5 py-2.5 font-mono text-[13px] text-[var(--status-failed)]">
           {deviceCode || "ESL-?????"}

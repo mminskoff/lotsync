@@ -41,7 +41,8 @@ export function VinScanStep({
         </button>
         <h2 className="text-[17px] font-semibold">Enter VIN</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Type the 17-character VIN from the windshield or door jamb.
+          Type the 17-character VIN from the door jamb or windshield. Use this when there is no
+          barcode to scan.
         </p>
 
         <div className="mt-6">
@@ -83,9 +84,9 @@ export function VinScanStep({
       <CameraScanner
         target="vin"
         stepLabel="Step 1 of 2 · Vehicle"
-        hint="Point at the VIN barcode or QR code"
-        subhint="Windshield or driver door jamb — scans automatically"
-        manualLabel="Enter manually"
+        hint="Point at the barcode on the door jamb sticker"
+        subhint="Driver door jamb — scans automatically when a barcode is present"
+        manualLabel="Enter VIN manually"
         isLoading={isLoading}
         onScan={onSubmit}
         onManual={onManual}

@@ -35,6 +35,11 @@ export function parseScanPayload(
   }
 
   if (target === "esl") {
+    const normalized = trimmed.toUpperCase();
+    // Full rooftop codes (e.g. DOVERDO-ESL-009) — must not truncate to ESL-009
+    if (/^[A-Z0-9]+-ESL-[A-Z0-9-]+$/.test(normalized)) {
+      return { value: normalized, method: "qr" };
+    }
     const eslMatch = trimmed.match(/ESL-[\w-]+/i);
     if (eslMatch) {
       return { value: eslMatch[0].toUpperCase(), method: "qr" };

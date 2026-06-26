@@ -223,7 +223,7 @@ export function CameraScanner({
       const result = await reader.decodeFromImageElement(image);
       const parsed = parseScanPayload(result.getText(), target);
       if (!parsed) {
-        setError("No barcode found — hold steady and try again, or enter manually.");
+        setError("No barcode or QR found — use Enter manually for printed text.");
         return;
       }
 
@@ -272,7 +272,9 @@ export function CameraScanner({
         ) : null}
         {!error && !starting ? (
           <p className="px-8 pb-1 text-center text-[11px] font-medium text-white/55">
-            Auto-detects barcodes and QR codes — no button needed
+            {target === "vin"
+              ? "Barcode or QR only — printed VIN text won’t scan"
+              : "QR code on tag — use Enter manually for printed IDs"}
           </p>
         ) : null}
       </div>

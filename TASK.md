@@ -137,7 +137,9 @@ Complete in order. Hardware (M9) only swaps renderer/transport adapters.
 - [x] **8.5.7** Demo ESL seed for Nielsen rooftops — `scripts/seed_nielsen_esl_demo.py`
 - [x] **8.5.8** Price mismatch detection rules
 
-## Milestone 9 — Minew Kit
+## Milestone 9 — Minew Kit + Hardware Validation
+
+Kit integration and physical-lot checks (blocked until Minew kit arrives).
 
 - [ ] Identify models
 - [ ] Confirm NFC/QR
@@ -147,17 +149,19 @@ Complete in order. Hardware (M9) only swaps renderer/transport adapters.
 - [ ] Create MinewLocalRenderer
 - [ ] Create MinewLocalTransport
 - [ ] Push test label
+- [ ] Confirm physical ESL matches label preview
+- [ ] Reassign tag (verify old tag clears, new vehicle shows on ESL)
+- [ ] Simulate gateway failure (disconnect gateway/network; confirm retry + dashboard alert)
 
-## Milestone 10 — Driveway Validation
+## Milestone 10 — Driveway Validation (stub dry run)
 
-- [ ] Create 3 test vehicles
-- [ ] Create 3 test ESL devices
-- [ ] Pair each vehicle
-- [ ] Change price
-- [ ] Confirm tag updates
-- [ ] Reassign tag
-- [ ] Simulate gateway failure
-- [ ] Confirm audit log
+Software loop validated without hardware — stub renderer/transport, demo ESL seed, Dover Dodge PWA pairing (Jun 2026).
+
+- [x] Use test inventory + demo ESL devices (Nielsen seed / Dover rooftop)
+- [x] Pair vehicles to stub tags (2+ VINs via PWA manual entry)
+- [x] Change price → enqueue sync event
+- [x] Process sync queue → SYNCED + dashboard label preview
+- [x] Confirm audit log (`pairing.create`, `vehicle.update`, `sync_event.create`)
 
 ## Future — Shared Packages & Native Mobile
 
