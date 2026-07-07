@@ -4,6 +4,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.adapters.rendering.minew_pixel import infer_minew_color_mode
 from app.models.esl_device import ESLDevice
 from app.models.vehicle import Vehicle
 from app.schemas.label import DeviceProfile, LabelPayload
@@ -85,13 +86,19 @@ def build_device_profile(
     config = template_config or {}
     width = device.screen_width or config.get("width") or DEFAULT_SCREEN_WIDTH
     height = device.screen_height or config.get("height") or DEFAULT_SCREEN_HEIGHT
+    model = device.model or device.device_id
+    color_mode = (
+        config.get("color_mode")
+        or infer_minew_color_mode(model)
+        or DEFAULT_COLOR_MODE
+    )
 
     return DeviceProfile(
         provider=device.provider or config.get("provider") or "stub",
-        model=device.model or device.device_id,
+        model=model,
         width=int(width),
         height=int(height),
-        color_mode=config.get("color_mode") or DEFAULT_COLOR_MODE,
+        color_mode=color_mode,
         supports_nfc=bool(config.get("supports_nfc", False)),
         supports_qr=bool(config.get("supports_qr", True)),
     )

@@ -1,10 +1,12 @@
 from app.adapters.rendering.base import RendererAdapter
+from app.adapters.rendering.minew import MinewRenderer
 from app.adapters.rendering.preview import PreviewRenderer
 from app.adapters.rendering.stub import StubRenderer
 
 _RENDERERS: dict[str, RendererAdapter] = {
     "stub": StubRenderer(),
     "preview": PreviewRenderer(),
+    "minew": MinewRenderer(),
 }
 
 

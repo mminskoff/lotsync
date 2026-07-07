@@ -1,8 +1,11 @@
 from app.adapters.transport.base import TransportAdapter
+from app.adapters.transport.minew_mqtt import MinewMqttTransport
 from app.adapters.transport.stub import StubTransport
 
 _TRANSPORTS: dict[str, TransportAdapter] = {
     "stub": StubTransport(),
+    "minew": MinewMqttTransport(),
+    "minew_mqtt": MinewMqttTransport(),
 }
 
 

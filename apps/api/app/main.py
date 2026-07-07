@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 import app.models  # noqa: F401 — register ORM models for SQLAlchemy metadata
 from app.core.config import settings
+from app.core.config import settings
 from app.core.database import check_db_connection
 from app.routers import api_router
 
@@ -23,7 +24,14 @@ app.include_router(api_router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "renderer_adapter": settings.renderer_adapter,
+        "transport_adapter": settings.transport_adapter,
+        "minew_mqtt_configured": bool(
+            settings.minew_mqtt_host.strip() and settings.minew_mqtt_topic.strip()
+        ),
+    }
 
 
 @app.get("/health/db")

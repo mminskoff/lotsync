@@ -73,9 +73,39 @@ def test_end_to_end_stub_pipeline():
     assert result.success is True
 
 
+def test_minew_renderer_registered():
+    renderer = get_renderer_adapter("minew")
+    profile = DeviceProfile(
+        provider="minew",
+        model="4.2-BWRY",
+        width=400,
+        height=300,
+        color_mode="BWRY",
+    )
+    rendered = renderer.render(_sample_payload(), profile)
+    assert rendered.format == "minew_bwry"
+    assert rendered.payload["byte_length"] == 30_000
+
+
+def test_minew_transport_unconfigured():
+    transport = get_transport_adapter("minew")
+    renderer = get_renderer_adapter("minew")
+    profile = DeviceProfile(
+        provider="minew",
+        model="4.2-BWRY",
+        width=400,
+        height=300,
+        color_mode="BWRY",
+    )
+    rendered = renderer.render(_sample_payload(), profile)
+    result = transport.push_label("E100000A1525", rendered)
+    assert result.success is False
+    assert "MINEW_MQTT_HOST" in (result.error or "")
+
+
 def test_unknown_renderer_raises():
     with pytest.raises(ValueError, match="Unsupported renderer"):
-        get_renderer_adapter("minew")
+        get_renderer_adapter("unknown_vendor")
 
 
 def test_preview_renderer_registered():
@@ -86,4 +116,4 @@ def test_preview_renderer_registered():
 
 def test_unknown_transport_raises():
     with pytest.raises(ValueError, match="Unsupported transport"):
-        get_transport_adapter("minew")
+        get_transport_adapter("unknown_vendor")

@@ -3,6 +3,7 @@
 import { ArrowRight, Clock3, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { AddToHomeScreenHint } from "@/components/pairing/AddToHomeScreenHint";
 import { LogoMark } from "@/components/brand/LogoMark";
 import { Badge } from "@/components/ui/badge";
 import { listVehicles } from "@/lib/vehiclesApi";
@@ -71,6 +72,8 @@ export function PairHomeStep({ onStartPairing, onLookup, onRecent }: PairHomeSte
           )
         ) : null}
       </div>
+
+      <AddToHomeScreenHint />
 
       <button
         type="button"
