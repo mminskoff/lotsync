@@ -59,33 +59,34 @@ Used by `label_payload_service.build_device_profile()` when `device_config.color
 }
 ```
 
-## Transport (pending Minew docs)
+## Transport
 
-`MinewMqttTransport` publishes a JSON envelope to `MINEW_MQTT_TOPIC` once configured:
+See **`docs/MINEW_MQTT_INTEGRATION.md`** for the full gateway protocol.
+
+`MinewMqttTransport` publishes to `Mqtt/GateWay/<GATEWAY_MAC>/Command`:
 
 | Env var | Purpose |
 |---|---|
-| `MINEW_MQTT_HOST` | Broker hostname (gateway or LAN broker) |
-| `MINEW_MQTT_PORT` | Default `1883` |
-| `MINEW_MQTT_TOPIC` | Publish topic from Minew integration doc |
-| `MINEW_JENGINE_COMMAND` | Jengine command id (default `42` = image refresh) |
+| `MQTT_HOST` | Gateway/broker IP (e.g. `192.168.99.1`) |
+| `MQTT_PORT` | Default `1883` |
+| `MQTT_USERNAME` / `MQTT_PASSWORD` | Broker auth if required |
+| `GATEWAY_MAC` | G1-E MAC without colons (e.g. `FC233FC2B7C2`) |
+| `ESL_TAG_MAC` | Pilot tag BLE MAC (fallback when not in DB) |
 
-Placeholder message shape:
+Downlink envelope:
 
 ```json
 {
-  "command": "42",
-  "device_id": "E100000A1525",
-  "encoding": "bwry",
-  "color_mode": "BWRY",
-  "width": 400,
-  "height": 300,
-  "data_b64": "...",
-  "metadata": {}
+  "msg": "dData",
+  "mac": "<TAG_BLE_MAC>",
+  "seq": 1,
+  "auth1": "00000000",
+  "dType": "ascii",
+  "data": "<JENGINE_02_HEX>"
 }
 ```
 
-**Blocked:** exact topic, field names, and binary vs base64 encoding until Minew replies. Do not enable `TRANSPORT_ADAPTER=minew_mqtt` in production until validated against the gateway.
+**Tag BLE MAC** must be in `esl_devices.provider_device_id` (not the `E100…` barcode ID).
 
 ## Adapters
 

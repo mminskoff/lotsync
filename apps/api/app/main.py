@@ -24,13 +24,17 @@ app.include_router(api_router)
 
 @app.get("/health")
 def health():
+    gateway_mac = settings.gateway_mac.strip()
     return {
         "status": "ok",
         "renderer_adapter": settings.renderer_adapter,
         "transport_adapter": settings.transport_adapter,
         "minew_mqtt_configured": bool(
-            settings.minew_mqtt_host.strip() and settings.minew_mqtt_topic.strip()
+            settings.mqtt_host.strip()
+            and (gateway_mac or settings.minew_mqtt_topic.strip())
         ),
+        "gateway_mac_set": bool(gateway_mac),
+        "esl_tag_mac_set": bool(settings.esl_tag_mac.strip()),
     }
 
 

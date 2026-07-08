@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.tenancy import get_dealership_id
+from app.schemas.esl_update import RenderLabelResponse, SendToEslResponse
 from app.schemas.pairing import PushLabelResponse, VinAssignmentResponse
 from app.schemas.vehicle import VehicleCreate, VehicleResponse, VehicleUpdate
-from app.services import pairing_service, vehicle_service
+from app.services import minew_update_service, pairing_service, vehicle_service
 from app.services.label_preview_service import render_vehicle_label_png
 
 router = APIRouter(prefix="/vehicles", tags=["vehicles"])
@@ -57,6 +58,29 @@ def update_vehicle(
     db: Session = Depends(get_db),
 ):
     return vehicle_service.update_vehicle(db, dealership_id, vehicle_id, data)
+
+
+@router.post("/{vehicle_id}/render-label", response_model=RenderLabelResponse)
+def render_label(
+    vehicle_id: UUID,
+    dealership_id: UUID = Depends(get_dealership_id),
+    db: Session = Depends(get_db),
+):
+    return minew_update_service.render_vehicle_label(
+        db,
+        dealership_id,
+        vehicle_id,
+        persist_job=True,
+    )
+
+
+@router.post("/{vehicle_id}/send-to-esl", response_model=SendToEslResponse)
+def send_to_esl(
+    vehicle_id: UUID,
+    dealership_id: UUID = Depends(get_dealership_id),
+    db: Session = Depends(get_db),
+):
+    return minew_update_service.send_vehicle_to_esl(db, dealership_id, vehicle_id)
 
 
 @router.post("/{vehicle_id}/push-label", response_model=PushLabelResponse)

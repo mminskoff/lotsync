@@ -100,7 +100,7 @@ def test_minew_transport_unconfigured():
     rendered = renderer.render(_sample_payload(), profile)
     result = transport.push_label("E100000A1525", rendered)
     assert result.success is False
-    assert "MINEW_MQTT_HOST" in (result.error or "")
+    assert "MQTT_HOST" in (result.error or "")
 
 
 def test_unknown_renderer_raises():

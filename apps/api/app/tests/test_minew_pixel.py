@@ -82,7 +82,7 @@ def test_minew_transport_unconfigured_returns_clear_error():
 
     result = transport.push_label("E100000A1525", rendered)
     assert result.success is False
-    assert "MINEW_MQTT_HOST" in (result.error or "")
+    assert "MQTT_HOST" in (result.error or "")
 
 
 def test_encode_minew_pixels_rejects_unknown_mode():

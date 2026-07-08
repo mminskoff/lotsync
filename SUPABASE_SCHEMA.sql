@@ -139,6 +139,28 @@ CREATE TABLE sync_events (
 CREATE INDEX idx_sync_events_dealership_id ON sync_events (dealership_id);
 CREATE INDEX idx_sync_events_created_at ON sync_events (dealership_id, created_at DESC);
 
+-- esl_update_jobs (Minew hardware push tracking)
+CREATE TABLE esl_update_jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    dealership_id UUID NOT NULL REFERENCES dealerships (id) ON DELETE CASCADE,
+    vehicle_id UUID REFERENCES vehicles (id) ON DELETE SET NULL,
+    esl_device_id UUID REFERENCES esl_devices (id) ON DELETE SET NULL,
+    tag_mac TEXT NOT NULL,
+    gateway_mac TEXT NOT NULL,
+    image_path TEXT,
+    encoded_payload_path TEXT,
+    seq INT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    error_message TEXT,
+    gateway_response JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    sent_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_esl_update_jobs_dealership_id ON esl_update_jobs (dealership_id);
+CREATE INDEX idx_esl_update_jobs_created_at ON esl_update_jobs (dealership_id, created_at DESC);
+
 -- label_templates
 CREATE TABLE label_templates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -201,6 +223,7 @@ ALTER TABLE esl_devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vehicle_esl_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE inventory_sources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sync_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE esl_update_jobs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE label_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rendered_labels ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
@@ -214,6 +237,7 @@ CREATE POLICY esl_devices_deny_api ON esl_devices FOR ALL TO anon, authenticated
 CREATE POLICY vehicle_esl_assignments_deny_api ON vehicle_esl_assignments FOR ALL TO anon, authenticated USING (false);
 CREATE POLICY inventory_sources_deny_api ON inventory_sources FOR ALL TO anon, authenticated USING (false);
 CREATE POLICY sync_events_deny_api ON sync_events FOR ALL TO anon, authenticated USING (false);
+CREATE POLICY esl_update_jobs_deny_api ON esl_update_jobs FOR ALL TO anon, authenticated USING (false);
 CREATE POLICY label_templates_deny_api ON label_templates FOR ALL TO anon, authenticated USING (false);
 CREATE POLICY rendered_labels_deny_api ON rendered_labels FOR ALL TO anon, authenticated USING (false);
 CREATE POLICY audit_logs_deny_api ON audit_logs FOR ALL TO anon, authenticated USING (false);

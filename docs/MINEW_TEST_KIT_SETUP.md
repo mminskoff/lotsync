@@ -36,7 +36,8 @@ Each tag shows a **1D barcode + device ID on the e-paper screen** — use the pa
 |---|---|
 | BWRY / BWR / E6 encoders | `apps/api/app/adapters/rendering/minew_pixel.py` |
 | Label → pixel renderer | `apps/api/app/adapters/rendering/minew.py` |
-| MQTT transport skeleton | `apps/api/app/adapters/transport/minew_mqtt.py` |
+| MQTT transport | `apps/api/app/adapters/transport/minew_mqtt.py` |
+| MQTT integration | `docs/MINEW_MQTT_INTEGRATION.md` |
 | Pixel format reference | `docs/MINEW_PIXEL_FORMAT.md` |
 | Seed script | `apps/api/scripts/seed_minew_kit.py` |
 
@@ -47,17 +48,18 @@ cd apps/api
     PYTHONPATH=. .venv/bin/python scripts/seed_minew_kit.py --slug dover-dodge
 ```
 
-### Enable adapters (after MQTT topic confirmed)
+### Enable adapters (gateway on LAN)
 
 ```env
 RENDERER_ADAPTER=minew
 TRANSPORT_ADAPTER=minew_mqtt
-MINEW_MQTT_HOST=<gateway-or-broker>
-MINEW_MQTT_TOPIC=<from-minew-doc>
-MINEW_JENGINE_COMMAND=42
+MQTT_HOST=192.168.99.1
+MQTT_PORT=1883
+GATEWAY_MAC=FC233FC2B7C2
+ESL_TAG_MAC=<pilot_tag_ble_mac>
 ```
 
-Until `MINEW_MQTT_*` is set, sync events will render pixels but transport returns a clear configuration error (safe for staging).
+Set each tag's **BLE MAC** on `provider_device_id` (discover from gateway uplink). Barcode ID `E100000A1525` stays on `device_id` for pairing.
 
 ## Hardware Checklist
 

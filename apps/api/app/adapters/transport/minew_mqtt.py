@@ -1,12 +1,17 @@
-"""Minew ESL transport — MQTT publish skeleton (topic/payload from Minew integration docs)."""
+"""Minew ESL transport — MQTT downlink via MinewMqttClient."""
 
 from __future__ import annotations
 
-import json
+import base64
 import logging
-import socket
 
 from app.adapters.transport.base import TransportAdapter
+from app.adapters.transport.minew_jengine import (
+    build_command_02_data,
+    normalize_mac,
+    resolve_tag_mac,
+)
+from app.adapters.transport.minew_mqtt_client import build_command_topic, get_minew_mqtt_client
 from app.core.config import settings
 from app.schemas.label import RenderedLabel, TransportPushResult
 
@@ -16,10 +21,7 @@ MINEW_FORMAT_PREFIX = "minew_"
 
 
 class MinewMqttTransport(TransportAdapter):
-    """Publishes rendered pixel data to a Minew-configured MQTT broker.
-
-    Requires MINEW_MQTT_HOST and MINEW_MQTT_TOPIC once Minew supplies the protocol.
-    """
+    """Publishes Jengine display data to a Minew G1-E gateway via MQTT."""
 
     def push_label(
         self,
@@ -41,35 +43,50 @@ class MinewMqttTransport(TransportAdapter):
                 error="Minew rendered payload must be a dict with data_b64",
             )
 
-        host = settings.minew_mqtt_host.strip()
-        topic = settings.minew_mqtt_topic.strip()
-        if not host or not topic:
-            byte_length = rendered.payload.get("byte_length", "?")
+        config_error = _configuration_error()
+        if config_error:
             logger.warning(
-                "MinewMqttTransport not configured (set MINEW_MQTT_HOST + MINEW_MQTT_TOPIC). "
-                "Would push %s bytes to device_id=%s encoding=%s",
-                byte_length,
+                "MinewMqttTransport not configured: %s (device_id=%s)",
+                config_error,
                 device_id,
-                rendered.payload.get("encoding"),
             )
+            return TransportPushResult(
+                success=False,
+                device_id=device_id,
+                error=config_error,
+            )
+
+        tag_mac = resolve_tag_mac(
+            device_id=device_id,
+            metadata=metadata,
+            fallback_tag_mac=settings.esl_tag_mac,
+        )
+        if not tag_mac:
             return TransportPushResult(
                 success=False,
                 device_id=device_id,
                 error=(
-                    "Minew MQTT not configured — set MINEW_MQTT_HOST and MINEW_MQTT_TOPIC "
-                    "when Minew provides the integration example"
+                    "ESL tag BLE MAC required — set ESL_TAG_MAC, "
+                    "esl_devices.provider_device_id, or metadata.tag_mac"
                 ),
             )
 
-        message = _build_message(device_id, rendered, metadata)
         try:
-            _publish_mqtt(host, topic, message)
-        except OSError as exc:
+            gateway_mac = normalize_mac(settings.gateway_mac)
+            if not gateway_mac:
+                raise ValueError("GATEWAY_MAC is not configured")
+            encoded_data, pixel_length = _encode_rendered(rendered)
+            client = get_minew_mqtt_client()
+            client.connect()
+            client.subscribe_status()
+            result = client.publish_display_update(gateway_mac, tag_mac, encoded_data)
+            topic = str(result["topic"])
+        except (OSError, ValueError) as exc:
             logger.exception("MinewMqttTransport publish failed for device_id=%s", device_id)
             return TransportPushResult(
                 success=False,
                 device_id=device_id,
-                error=f"MQTT publish failed: {exc}",
+                error=str(exc),
             )
 
         return TransportPushResult(
@@ -78,86 +95,49 @@ class MinewMqttTransport(TransportAdapter):
             provider_response={
                 "adapter": "minew_mqtt",
                 "topic": topic,
-                "host": host,
-                "byte_length": rendered.payload.get("byte_length"),
+                "host": settings.mqtt_host.strip(),
+                "tag_mac": tag_mac,
+                "gateway_mac": gateway_mac,
+                "byte_length": pixel_length,
                 "jengine_command": settings.minew_jengine_command,
+                "d_type": settings.minew_mqtt_dtype,
+                "seq": result.get("seq"),
             },
         )
 
 
-def _build_message(
-    device_id: str,
-    rendered: RenderedLabel,
-    metadata: dict | None,
-) -> dict:
-    """Placeholder structure until Minew documents the exact Jengine envelope."""
-    body = rendered.payload if isinstance(rendered.payload, dict) else {}
-    return {
-        "command": settings.minew_jengine_command,
-        "device_id": device_id,
-        "encoding": body.get("encoding"),
-        "color_mode": body.get("color_mode"),
-        "width": rendered.width,
-        "height": rendered.height,
-        "data_b64": body.get("data_b64"),
-        "metadata": metadata or {},
-    }
+def _configuration_error() -> str | None:
+    if not settings.mqtt_host.strip():
+        return "Minew MQTT not configured — set MQTT_HOST to the gateway/broker IP"
+    if not normalize_mac(settings.gateway_mac) and not settings.minew_mqtt_topic.strip():
+        return (
+            "Minew MQTT not configured — set GATEWAY_MAC (for topic) "
+            "or MINEW_MQTT_TOPIC explicitly"
+        )
+    return None
 
 
-def _publish_mqtt(host: str, topic: str, message: dict) -> None:
-    """Minimal MQTT 3.1.1 PUBLISH without external dependencies.
+def _encode_rendered(rendered: RenderedLabel) -> tuple[str, int]:
+    body = rendered.payload
+    data_b64 = body.get("data_b64")
+    if not data_b64:
+        raise ValueError("Rendered Minew payload missing data_b64")
 
-    Sufficient for local broker smoke tests once topic/payload are confirmed.
-    """
-    payload = json.dumps(message, separators=(",", ":")).encode("utf-8")
-    port = settings.minew_mqtt_port
-    client_id = settings.minew_mqtt_client_id or "lotsync-transport"
+    pixel_bytes = base64.b64decode(data_b64)
+    width = int(rendered.width or body.get("width") or 0)
+    height = int(rendered.height or body.get("height") or 0)
+    if width <= 0 or height <= 0:
+        raise ValueError("Rendered label missing width/height for Jengine command 02")
 
-    packet = _mqtt_connect_packet(client_id)
-    packet += _mqtt_publish_packet(topic, payload)
-
-    with socket.create_connection((host, port), timeout=settings.minew_mqtt_timeout_seconds) as sock:
-        sock.settimeout(settings.minew_mqtt_timeout_seconds)
-        sock.sendall(packet)
-        sock.recv(4)
-
-
-def _mqtt_connect_packet(client_id: str) -> bytes:
-    proto = b"MQTT"
-    proto_level = 4
-    connect_flags = 0x02
-    keepalive = 60
-    client_id_bytes = client_id.encode("utf-8")
-
-    variable = (
-        len(proto).to_bytes(2, "big")
-        + proto
-        + bytes([proto_level, connect_flags])
-        + keepalive.to_bytes(2, "big")
-        + len(client_id_bytes).to_bytes(2, "big")
-        + client_id_bytes
+    encoded = build_command_02_data(
+        pixel_bytes,
+        width=width,
+        height=height,
+        encoding=settings.minew_jengine_data_encoding,
     )
-    return _mqtt_packet(0x10, variable)
+    return encoded, len(pixel_bytes)
 
 
-def _mqtt_publish_packet(topic: str, payload: bytes) -> bytes:
-    topic_bytes = topic.encode("utf-8")
-    variable = len(topic_bytes).to_bytes(2, "big") + topic_bytes + payload
-    return _mqtt_packet(0x30, variable)
-
-
-def _mqtt_packet(packet_type: int, variable: bytes) -> bytes:
-    return bytes([packet_type]) + _encode_remaining_length(len(variable)) + variable
-
-
-def _encode_remaining_length(length: int) -> bytes:
-    out = bytearray()
-    while True:
-        digit = length % 128
-        length //= 128
-        if length > 0:
-            digit |= 0x80
-        out.append(digit)
-        if length == 0:
-            break
-    return bytes(out)
+def build_mqtt_topic(gateway_mac: str | None = None) -> str:
+    mac = gateway_mac or settings.gateway_mac
+    return build_command_topic(mac)

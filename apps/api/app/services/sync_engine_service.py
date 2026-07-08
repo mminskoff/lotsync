@@ -65,7 +65,13 @@ def process_sync_event(db: Session, event: SyncEvent) -> SyncEvent:
         result = transport.push_label(
             device.device_id,
             rendered,
-            metadata={"sync_event_id": str(event.id), "event_type": event.event_type},
+            metadata={
+                "sync_event_id": str(event.id),
+                "event_type": event.event_type,
+                "provider_device_id": device.provider_device_id,
+                "esl_device_id": str(device.id),
+                "gateway_id": device.gateway_id,
+            },
         )
         if not result.success:
             raise SyncProcessingError(result.error or "Transport adapter reported failure")
