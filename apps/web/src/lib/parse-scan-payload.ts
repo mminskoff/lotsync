@@ -36,13 +36,17 @@ export function parseScanPayload(
 
   if (target === "esl") {
     const normalized = trimmed.toUpperCase();
+    // Minew hardware IDs (e.g. E100000A1525)
+    if (/^E[0-9A-F]{10,}$/i.test(normalized)) {
+      return { value: normalized, method: "barcode" };
+    }
     // Full rooftop codes (e.g. DOVERDO-ESL-009) — must not truncate to ESL-009
     if (/^[A-Z0-9]+-ESL-[A-Z0-9-]+$/.test(normalized)) {
-      return { value: normalized, method: "qr" };
+      return { value: normalized, method: "barcode" };
     }
     const eslMatch = trimmed.match(/ESL-[\w-]+/i);
     if (eslMatch) {
-      return { value: eslMatch[0].toUpperCase(), method: "qr" };
+      return { value: eslMatch[0].toUpperCase(), method: "barcode" };
     }
   }
 
@@ -59,7 +63,7 @@ export function parseScanPayload(
   if (trimmed.length >= 3) {
     return {
       value: trimmed.toUpperCase(),
-      method: target === "esl" ? "qr" : "barcode",
+      method: target === "esl" ? "barcode" : "barcode",
     };
   }
 

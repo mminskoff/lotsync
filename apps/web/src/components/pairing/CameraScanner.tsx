@@ -20,8 +20,18 @@ interface CameraScannerProps {
   onManual: () => void;
 }
 
-function Brackets() {
+function Brackets({ wide = false }: { wide?: boolean }) {
   const corner = "absolute size-[34px] border-[3px] border-white";
+  if (wide) {
+    return (
+      <div className="relative h-[88px] w-[min(88vw,300px)]">
+        <span className={`${corner} top-0 left-0 rounded-tl-[10px] border-r-0 border-b-0`} />
+        <span className={`${corner} top-0 right-0 rounded-tr-[10px] border-b-0 border-l-0`} />
+        <span className={`${corner} bottom-0 left-0 rounded-bl-[10px] border-t-0 border-r-0`} />
+        <span className={`${corner} bottom-0 right-0 rounded-br-[10px] border-t-0 border-l-0`} />
+      </div>
+    );
+  }
   return (
     <div className="relative h-[132px] w-[200px]">
       <span className={`${corner} top-0 left-0 rounded-tl-[10px] border-r-0 border-b-0`} />
@@ -34,17 +44,25 @@ function Brackets() {
 
 function barcodeFormats(target: ScanTarget) {
   return import("@zxing/library").then(({ BarcodeFormat, DecodeHintType }) => {
+    const oneDimensional = [
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.CODE_39,
+      BarcodeFormat.CODE_93,
+      BarcodeFormat.ITF,
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+    ];
     const formats =
       target === "vin"
         ? [
             BarcodeFormat.QR_CODE,
-            BarcodeFormat.CODE_128,
-            BarcodeFormat.CODE_39,
             BarcodeFormat.DATA_MATRIX,
+            ...oneDimensional,
           ]
-        : [BarcodeFormat.QR_CODE];
+        : [BarcodeFormat.QR_CODE, ...oneDimensional];
     const hints = new Map();
     hints.set(DecodeHintType.POSSIBLE_FORMATS, formats);
+    hints.set(DecodeHintType.TRY_HARDER, true);
     return hints;
   });
 }
@@ -201,29 +219,37 @@ export function CameraScanner({
 
     const video = videoRef.current;
     const reader = readerRef.current;
-    if (!video || !reader || video.videoWidth === 0) {
+    if (!video || !reader) {
+      setError("Camera not ready — wait a moment or use manual entry.");
+      return;
+    }
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      setError("Camera still starting — wait a second and tap again.");
       return;
     }
 
     setCapturing(true);
+    setError(null);
     try {
+      const scale = 2;
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      const context = canvas.getContext("2d");
+      canvas.width = video.videoWidth * scale;
+      canvas.height = video.videoHeight * scale;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
       if (!context) {
+        setError("Could not read camera frame — use manual entry.");
         return;
       }
-      context.drawImage(video, 0, 0);
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
       const image = new Image();
-      image.src = canvas.toDataURL("image/jpeg", 0.92);
+      image.src = canvas.toDataURL("image/png");
       await image.decode();
 
       const result = await reader.decodeFromImageElement(image);
       const parsed = parseScanPayload(result.getText(), target);
       if (!parsed) {
-        setError("No barcode or QR found — use Enter manually for printed text.");
+        setError("Barcode not recognized — enter the tag ID manually.");
         return;
       }
 
@@ -231,7 +257,11 @@ export function CameraScanner({
       controlsRef.current?.stop();
       onScanRef.current(parsed.value, parsed.method);
     } catch {
-      setError("No barcode found — hold steady and try again, or enter manually.");
+      setError(
+        target === "esl"
+          ? "No barcode found — fill the frame with the 1D barcode, hold steady, or enter manually."
+          : "No barcode found — hold steady and try again, or enter manually.",
+      );
     } finally {
       setCapturing(false);
     }
@@ -274,7 +304,7 @@ export function CameraScanner({
           <p className="px-8 pb-1 text-center text-[11px] font-medium text-white/55">
             {target === "vin"
               ? "Barcode or QR only — printed VIN text won’t scan"
-              : "QR code on tag — use Enter manually for printed IDs"}
+              : "1D barcode on tag (Minew) or QR — printed ID text won’t scan"}
           </p>
         ) : null}
       </div>
@@ -294,7 +324,7 @@ export function CameraScanner({
           </div>
         ) : error ? null : (
           <div className="pointer-events-none relative z-10 flex flex-col items-center gap-3">
-            <Brackets />
+            <Brackets wide={target === "esl"} />
             {scanning ? (
               <div className="flex items-center gap-2 rounded-full bg-black/45 px-3 py-1.5 text-[11px] font-semibold text-white/90">
                 <span className="size-2 animate-pulse rounded-full bg-green-400" />

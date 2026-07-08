@@ -48,7 +48,7 @@ export function EslScanStep({
         <div className="mt-6">
           <ManualEntryInput
             label="ESL tag code"
-            placeholder="e.g. DOVERDO-ESL-009"
+            placeholder="e.g. E100000A1525 or DOVERDO-ESL-009"
             value={value}
             onValueChange={onValueChange}
             isLoading={isLoading}
@@ -82,8 +82,8 @@ export function EslScanStep({
       <CameraScanner
         target="esl"
         stepLabel="Step 2 of 2 · Tag"
-        hint="Point at the QR code on the ESL tag"
-        subhint="No QR? Enter the full tag ID manually"
+        hint="Point at the 1D barcode on the ESL tag"
+        subhint="Fill the frame with the barcode stripes — or enter E100000… manually"
         manualLabel="Enter tag ID manually"
         vehicle={vehicleLookup.vehicle}
         isLoading={isLoading}

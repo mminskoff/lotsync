@@ -7,6 +7,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { LabelPreview } from "@/components/dashboard/LabelPreview";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { SyncStatusBadge } from "@/components/dashboard/SyncStatusBadge";
+import { VehicleEslAssignment } from "@/components/dashboard/VehicleEslAssignment";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +31,18 @@ export default function VehicleDetailPage() {
   const [events, setEvents] = useState<SyncEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  async function refreshAssignment() {
+    if (!apiDealershipId || !params.id) return;
+    const [v, pairingsRes, syncRows] = await Promise.all([
+      getVehicle(params.id, { dealershipId: apiDealershipId }),
+      listActivePairings({ dealershipId: apiDealershipId }),
+      listSyncEvents({ dealershipId: apiDealershipId, vehicleId: params.id }),
+    ]);
+    setVehicle(v);
+    setPairing(pairingsRes.pairings.find((p) => p.vehicle.id === params.id) ?? null);
+    setEvents(syncRows);
+  }
 
   useEffect(() => {
     if (!apiDealershipId || !params.id) return;
@@ -66,6 +79,14 @@ export default function VehicleDetailPage() {
       cancelled = true;
     };
   }, [apiDealershipId, params.id]);
+
+  async function handlePaired() {
+    try {
+      await refreshAssignment();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to refresh vehicle");
+    }
+  }
 
   if (isLoading) {
     return <Skeleton className="h-64 w-full rounded-2xl" />;
@@ -145,24 +166,12 @@ export default function VehicleDetailPage() {
 
         <section className="rounded-2xl border border-border bg-background p-5 lg:col-span-2">
           <h2 className="mb-4 font-semibold">Assigned ESL</h2>
-          {pairing ? (
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-muted-foreground">Tag</dt>
-                <dd className="font-mono font-medium">{pairing.device.device_id}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Paired</dt>
-                <dd>{formatDateTime(pairing.assigned_at)}</dd>
-              </div>
-              <div>
-                <dt className="text-muted-foreground">Source</dt>
-                <dd>{pairing.assignment_source}</dd>
-              </div>
-            </dl>
-          ) : (
-            <p className="text-sm text-muted-foreground">No active tag assignment.</p>
-          )}
+          <VehicleEslAssignment
+            vehicle={vehicle}
+            pairing={pairing}
+            dealershipId={apiDealershipId}
+            onPaired={() => void handlePaired()}
+          />
         </section>
 
         <section className="rounded-2xl border border-border bg-background p-5 lg:col-span-2">
