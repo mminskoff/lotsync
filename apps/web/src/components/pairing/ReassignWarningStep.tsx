@@ -79,11 +79,11 @@ export function ReassignWarningStep({
           type="button"
           size="lg"
           variant="destructive"
-          className="w-full bg-[var(--status-failed)] font-semibold hover:brightness-95"
+          className="w-full bg-[var(--status-failed)] font-semibold text-white hover:brightness-95 hover:bg-[var(--status-failed)]"
           disabled={isLoading}
           onClick={onConfirm}
         >
-          {isLoading ? "Reassigning…" : `Reassign to ${newTitle.split(" ").slice(-1)[0] ?? "vehicle"}`}
+          {isLoading ? "Reassigning…" : `Reassign to ${newTitle}`}
         </Button>
         <Button
           type="button"

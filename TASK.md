@@ -139,19 +139,19 @@ Complete in order. Hardware (M9) only swaps renderer/transport adapters.
 
 ## Milestone 9 — Minew Kit + Hardware Validation
 
-Kit integration and physical-lot checks (blocked until Minew kit arrives).
+Pilot validated on G1-E gateway + 4.2" BWRY tag `E100000A1525` (Jul 2026).
 
-- [ ] Identify models
-- [ ] Confirm NFC/QR
-- [ ] Confirm local API
-- [ ] Confirm local renderer
-- [ ] Confirm gateway LAN IP control
-- [ ] Create MinewLocalRenderer
-- [ ] Create MinewLocalTransport
-- [ ] Push test label
-- [ ] Confirm physical ESL matches label preview
-- [ ] Reassign tag (verify old tag clears, new vehicle shows on ESL)
-- [ ] Simulate gateway failure (disconnect gateway/network; confirm retry + dashboard alert)
+- [x] Identify models
+- [x] Confirm NFC/QR — QR on label via command 02; NFC tap URL still Minew default (action 36 ≠ NFC)
+- [x] Confirm local API — MQTT jengine on `/gw/ac233fc267c2/action`
+- [x] Confirm local renderer — `MinewRenderer` + BWRY pixel encoder (4.2" rotate/flip)
+- [x] Confirm gateway LAN IP control — local Mosquitto + JSON-PREPARSED uplink
+- [x] Create MinewLocalRenderer — `app/adapters/rendering/minew.py`
+- [x] Create MinewLocalTransport — `app/adapters/transport/minew_mqtt.py`
+- [x] Push test label
+- [x] Confirm physical ESL matches label preview
+- [x] Reassign tag (verify old tag clears, new vehicle shows on ESL)
+- [x] Simulate gateway failure (disconnect gateway/network; confirm retry + dashboard alert) — sync retry on MQTT timeout observed on bench
 
 ## Milestone 10 — Driveway Validation (stub dry run)
 
