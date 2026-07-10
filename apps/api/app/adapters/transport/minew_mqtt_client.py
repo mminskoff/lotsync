@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import time
 from collections import deque
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -12,7 +13,13 @@ from typing import Any
 
 import paho.mqtt.client as mqtt
 
-from app.adapters.transport.minew_jengine import normalize_mac
+from app.adapters.transport.minew_jengine import (
+    build_command_02_data,
+    build_jengine_image_set_req,
+    encode_image_data_b64,
+    normalize_esl_mqtt_mac,
+    normalize_mac,
+)
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -34,7 +41,31 @@ class GatewayMessage:
         }
 
 
+def _gateway_mac_lower(gateway_mac: str) -> str:
+    mac = normalize_mac(gateway_mac)
+    if not mac:
+        raise ValueError("Gateway MAC must be 12 uppercase hex characters")
+    return mac.lower()
+
+
+def build_action_topic(gateway_mac: str) -> str:
+    """Default jengine downlink topic: /gw/{mac}/action."""
+    override = settings.minew_mqtt_topic.strip()
+    if override:
+        return override
+    return f"/gw/{_gateway_mac_lower(gateway_mac)}/action"
+
+
+def build_response_topic(gateway_mac: str) -> str:
+    return f"/gw/{_gateway_mac_lower(gateway_mac)}/response"
+
+
+def build_status_topic(gateway_mac: str) -> str:
+    return f"/gw/{_gateway_mac_lower(gateway_mac)}/status"
+
+
 def build_command_topic(gateway_mac: str) -> str:
+    """Legacy dData topic: Mqtt/GateWay/{MAC}/Command."""
     override = settings.minew_mqtt_topic.strip()
     if override:
         return override
@@ -47,9 +78,9 @@ def build_command_topic(gateway_mac: str) -> str:
 
 
 def build_ddata_payload(tag_mac: str, encoded_data: str, *, seq: int) -> dict[str, Any]:
-    mac = normalize_mac(tag_mac)
+    mac = normalize_esl_mqtt_mac(tag_mac)
     if not mac:
-        raise ValueError("Tag MAC must be 12 uppercase hex characters")
+        raise ValueError("Tag device id must be 12 uppercase hex characters")
     return {
         "msg": settings.minew_mqtt_msg_type,
         "mac": mac,
@@ -70,6 +101,15 @@ class MinewMqttClient:
         self._lock = threading.Lock()
         self._messages: deque[GatewayMessage] = deque(maxlen=MAX_STATUS_MESSAGES)
         self._seq = 0
+        self._req_id = 0
+
+    def _next_seq(self) -> int:
+        self._seq = (self._seq % 65535) + 1
+        return self._seq
+
+    def _next_req_id(self) -> int:
+        self._req_id = (self._req_id % 2_147_483_647) + 1
+        return self._req_id
 
     @property
     def connected(self) -> bool:
@@ -116,7 +156,81 @@ class MinewMqttClient:
             self._connected = False
             self._subscribed = False
 
-    def publish_display_update(
+    def publish_jengine_command(
+        self,
+        gateway_mac: str,
+        command: dict[str, Any],
+        *,
+        req_id: int | None = None,
+    ) -> dict[str, Any]:
+        if not self._connected or self._client is None:
+            self.connect()
+
+        topic = build_action_topic(gateway_mac)
+        body = json.dumps(command, separators=(",", ":"))
+        assert self._client is not None
+        info = self._client.publish(topic, body, qos=0)
+        if info.rc != mqtt.MQTT_ERR_SUCCESS:
+            raise OSError(f"MQTT publish failed with rc={info.rc}")
+        # qos=0 has no broker ack; loop briefly so short-lived scripts flush the socket.
+        deadline = time.monotonic() + 2.0
+        while not info.is_published() and time.monotonic() < deadline:
+            time.sleep(0.05)
+
+        resolved_req_id = int(command.get("req_id") or req_id or 0)
+        logger.info(
+            "Published Minew jengine command topic=%s action=%s req_id=%s bytes=%d",
+            topic,
+            command.get("action"),
+            resolved_req_id,
+            len(body),
+        )
+        return {"topic": topic, "payload": command, "req_id": resolved_req_id}
+
+    def publish_label_update(
+        self,
+        gateway_mac: str,
+        tag_mac: str,
+        pixel_bytes: bytes,
+        *,
+        width: int,
+        height: int,
+        seq: int | None = None,
+        req_id: int | None = None,
+        opcode: int | None = None,
+        img_id: int | None = None,
+    ) -> dict[str, Any]:
+        """Publish a display update using configured downlink format (jengine or legacy dData)."""
+        downlink = settings.minew_mqtt_downlink_format.strip().lower()
+        if downlink == "ddata":
+            if seq is None:
+                seq = self._next_seq()
+            encoded_data = build_command_02_data(
+                pixel_bytes,
+                width=width,
+                height=height,
+                encoding=settings.minew_jengine_data_encoding,
+            )
+            return self.publish_ddata_update(gateway_mac, tag_mac, encoded_data, seq=seq)
+
+        resolved_req_id = req_id or self._next_req_id()
+        resolved_opcode = opcode if opcode is not None else resolved_req_id
+        resolved_img_id = img_id if img_id is not None else resolved_req_id
+        image_b64 = encode_image_data_b64(pixel_bytes)
+        command = build_jengine_image_set_req(
+            tag_mac=tag_mac,
+            image_data_b64=image_b64,
+            req_id=resolved_req_id,
+            opcode=resolved_opcode,
+            img_id=resolved_img_id,
+            device_key=settings.minew_jengine_device_key.strip(),
+            single=settings.minew_jengine_single_firmware,
+            screen=settings.minew_jengine_screen.strip().upper() or "A",
+            compress=settings.minew_jengine_compress.strip().upper() or "NONE",
+        )
+        return self.publish_jengine_command(gateway_mac, command, req_id=resolved_req_id)
+
+    def publish_ddata_update(
         self,
         gateway_mac: str,
         tag_mac: str,
@@ -128,8 +242,7 @@ class MinewMqttClient:
             self.connect()
 
         if seq is None:
-            self._seq = (self._seq % 65535) + 1
-            seq = self._seq
+            seq = self._next_seq()
 
         topic = build_command_topic(gateway_mac)
         payload = build_ddata_payload(tag_mac, encoded_data, seq=seq)
@@ -140,13 +253,24 @@ class MinewMqttClient:
             raise OSError(f"MQTT publish failed with rc={info.rc}")
 
         logger.info(
-            "Published Minew display update topic=%s tag_mac=%s seq=%s bytes=%d",
+            "Published Minew dData update topic=%s tag_mac=%s seq=%s bytes=%d",
             topic,
-            normalize_mac(tag_mac),
+            normalize_esl_mqtt_mac(tag_mac),
             seq,
             len(encoded_data),
         )
         return {"topic": topic, "payload": payload, "seq": seq}
+
+    def publish_display_update(
+        self,
+        gateway_mac: str,
+        tag_mac: str,
+        encoded_data: str,
+        *,
+        seq: int | None = None,
+    ) -> dict[str, Any]:
+        """Legacy entry point — publishes raw dData hex envelope."""
+        return self.publish_ddata_update(gateway_mac, tag_mac, encoded_data, seq=seq)
 
     def subscribe_status(self, topic: str | None = None) -> str:
         if not self._connected or self._client is None:
@@ -207,9 +331,22 @@ class MinewMqttClient:
         logger.info("Minew gateway message topic=%s payload=%s", topic, payload)
 
         if isinstance(payload, dict):
+            method = payload.get("method")
+            if method in {"set_rsp", "get_rsp"}:
+                logger.info("Minew jengine response topic=%s payload=%s", topic, payload)
             error = payload.get("error")
             if error is not None and str(error) != "0":
                 logger.warning("Minew gateway reported error=%s topic=%s", error, topic)
+            payload_body = payload.get("payload")
+            if isinstance(payload_body, dict):
+                code = payload_body.get("code")
+                if code is not None and int(code) >= 100:
+                    logger.warning(
+                        "Minew jengine stage-1 error code=%s topic=%s message=%s",
+                        code,
+                        topic,
+                        payload_body.get("message"),
+                    )
             for key in ("set_rsp", "opcode", "img_id", "mac"):
                 if key in payload:
                     logger.debug("Minew status %s=%s", key, payload.get(key))

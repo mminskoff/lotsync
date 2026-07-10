@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.adapters.rendering.minew_pixel import infer_minew_color_mode
+from app.core.config import settings
 from app.models.esl_device import ESLDevice
 from app.models.vehicle import Vehicle
 from app.schemas.label import DeviceProfile, LabelPayload
@@ -52,6 +53,18 @@ def _specs_line(vehicle: Vehicle) -> str | None:
     return " · ".join(parts) if parts else None
 
 
+def resolve_label_qr_url(*, vin: str, vehicle_url: str | None = None) -> str | None:
+    """QR target: dealer VDP when known, else optional LABEL_QR_FALLBACK_URL template."""
+    if vehicle_url and vehicle_url.strip():
+        return vehicle_url.strip()
+    template = settings.label_qr_fallback_url.strip()
+    if not template:
+        return None
+    if "{vin}" in template:
+        return template.replace("{vin}", vin)
+    return f"{template.rstrip('/')}/v/{vin}"
+
+
 def build_label_payload(
     vehicle: Vehicle,
     *,
@@ -71,7 +84,7 @@ def build_label_payload(
         trim=vehicle.trim,
         mileage=format_mileage(vehicle.mileage),
         status=(vehicle.status or "available").lower(),
-        qr_url=vehicle.vehicle_url,
+        qr_url=resolve_label_qr_url(vin=vehicle.vin, vehicle_url=vehicle.vehicle_url),
         disclaimer=resolved_disclaimer,
         previous_price=_previous_price(vehicle),
         specs_line=_specs_line(vehicle),

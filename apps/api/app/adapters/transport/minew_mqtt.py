@@ -3,15 +3,22 @@
 from __future__ import annotations
 
 import base64
+import json
 import logging
 
 from app.adapters.transport.base import TransportAdapter
 from app.adapters.transport.minew_jengine import (
     build_command_02_data,
+    build_jengine_image_set_req,
+    encode_image_data_b64,
     normalize_mac,
     resolve_tag_mac,
 )
-from app.adapters.transport.minew_mqtt_client import build_command_topic, get_minew_mqtt_client
+from app.adapters.transport.minew_mqtt_client import (
+    build_action_topic,
+    build_command_topic,
+    get_minew_mqtt_client,
+)
 from app.core.config import settings
 from app.schemas.label import RenderedLabel, TransportPushResult
 
@@ -21,7 +28,7 @@ MINEW_FORMAT_PREFIX = "minew_"
 
 
 class MinewMqttTransport(TransportAdapter):
-    """Publishes Jengine display data to a Minew G1-E gateway via MQTT."""
+    """Publishes label updates to a Minew G1-E gateway via MQTT jengine (default) or dData."""
 
     def push_label(
         self,
@@ -66,7 +73,7 @@ class MinewMqttTransport(TransportAdapter):
                 success=False,
                 device_id=device_id,
                 error=(
-                    "ESL tag BLE MAC required — set ESL_TAG_MAC, "
+                    "ESL tag device id required — set ESL_TAG_MAC, "
                     "esl_devices.provider_device_id, or metadata.tag_mac"
                 ),
             )
@@ -75,11 +82,17 @@ class MinewMqttTransport(TransportAdapter):
             gateway_mac = normalize_mac(settings.gateway_mac)
             if not gateway_mac:
                 raise ValueError("GATEWAY_MAC is not configured")
-            encoded_data, pixel_length = _encode_rendered(rendered)
+            pixel_bytes, width, height = _decode_rendered(rendered)
             client = get_minew_mqtt_client()
             client.connect()
             client.subscribe_status()
-            result = client.publish_display_update(gateway_mac, tag_mac, encoded_data)
+            result = client.publish_label_update(
+                gateway_mac,
+                tag_mac,
+                pixel_bytes,
+                width=width,
+                height=height,
+            )
             topic = str(result["topic"])
         except (OSError, ValueError) as exc:
             logger.exception("MinewMqttTransport publish failed for device_id=%s", device_id)
@@ -94,13 +107,13 @@ class MinewMqttTransport(TransportAdapter):
             device_id=device_id,
             provider_response={
                 "adapter": "minew_mqtt",
+                "downlink_format": settings.minew_mqtt_downlink_format,
                 "topic": topic,
                 "host": settings.mqtt_host.strip(),
                 "tag_mac": tag_mac,
                 "gateway_mac": gateway_mac,
-                "byte_length": pixel_length,
-                "jengine_command": settings.minew_jengine_command,
-                "d_type": settings.minew_mqtt_dtype,
+                "byte_length": len(pixel_bytes),
+                "req_id": result.get("req_id"),
                 "seq": result.get("seq"),
             },
         )
@@ -114,10 +127,16 @@ def _configuration_error() -> str | None:
             "Minew MQTT not configured — set GATEWAY_MAC (for topic) "
             "or MINEW_MQTT_TOPIC explicitly"
         )
+    if settings.minew_mqtt_downlink_format.strip().lower() == "jengine":
+        if len(settings.minew_jengine_device_key.strip()) != 16:
+            return (
+                "Minew jengine not configured — set MINEW_JENGINE_DEVICE_KEY "
+                "(16-character BLE device key from Minew)"
+            )
     return None
 
 
-def _encode_rendered(rendered: RenderedLabel) -> tuple[str, int]:
+def _decode_rendered(rendered: RenderedLabel) -> tuple[bytes, int, int]:
     body = rendered.payload
     data_b64 = body.get("data_b64")
     if not data_b64:
@@ -128,16 +147,36 @@ def _encode_rendered(rendered: RenderedLabel) -> tuple[str, int]:
     height = int(rendered.height or body.get("height") or 0)
     if width <= 0 or height <= 0:
         raise ValueError("Rendered label missing width/height for Jengine command 02")
+    return pixel_bytes, width, height
 
-    encoded = build_command_02_data(
-        pixel_bytes,
-        width=width,
-        height=height,
-        encoding=settings.minew_jengine_data_encoding,
+
+def build_mqtt_artifact(pixel_bytes: bytes, *, width: int, height: int, tag_mac: str) -> str:
+    """Serialize the MQTT payload we intend to publish (for job artifacts / debugging)."""
+    downlink = settings.minew_mqtt_downlink_format.strip().lower()
+    if downlink == "ddata":
+        return build_command_02_data(
+            pixel_bytes,
+            width=width,
+            height=height,
+            encoding=settings.minew_jengine_data_encoding,
+        )
+    image_b64 = encode_image_data_b64(pixel_bytes)
+    command = build_jengine_image_set_req(
+        tag_mac=tag_mac,
+        image_data_b64=image_b64,
+        req_id=1,
+        opcode=1,
+        img_id=1,
+        device_key=settings.minew_jengine_device_key.strip() or "0000000000000000",
+        single=settings.minew_jengine_single_firmware,
+        screen=settings.minew_jengine_screen.strip().upper() or "A",
+        compress=settings.minew_jengine_compress.strip().upper() or "NONE",
     )
-    return encoded, len(pixel_bytes)
+    return json.dumps(command, indent=2)
 
 
 def build_mqtt_topic(gateway_mac: str | None = None) -> str:
     mac = gateway_mac or settings.gateway_mac
-    return build_command_topic(mac)
+    if settings.minew_mqtt_downlink_format.strip().lower() == "ddata":
+        return build_command_topic(mac)
+    return build_action_topic(mac)

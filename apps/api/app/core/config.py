@@ -72,8 +72,42 @@ class Settings(BaseSettings):
     minew_mqtt_msg_type: str = "dData"
     minew_mqtt_auth1: str = "00000000"
     minew_mqtt_dtype: str = "ascii"
+    minew_mqtt_downlink_format: str = Field(
+        default="jengine",
+        validation_alias=AliasChoices(
+            "MINEW_MQTT_DOWNLINK_FORMAT",
+            "minew_mqtt_downlink_format",
+        ),
+    )
+    minew_jengine_device_key: str = Field(
+        default="",
+        validation_alias=AliasChoices(
+            "MINEW_JENGINE_DEVICE_KEY",
+            "minew_jengine_device_key",
+        ),
+    )
+    minew_jengine_single_firmware: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "MINEW_JENGINE_SINGLE_FIRMWARE",
+            "minew_jengine_single_firmware",
+        ),
+    )
+    minew_jengine_screen: str = Field(
+        default="A",
+        validation_alias=AliasChoices("MINEW_JENGINE_SCREEN", "minew_jengine_screen"),
+    )
+    minew_jengine_compress: str = Field(
+        default="NONE",
+        validation_alias=AliasChoices("MINEW_JENGINE_COMPRESS", "minew_jengine_compress"),
+    )
     minew_jengine_command: str = "02"
     minew_jengine_data_encoding: str = "command02_v1"
+
+    label_qr_fallback_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("LABEL_QR_FALLBACK_URL", "label_qr_fallback_url"),
+    )
 
 
 settings = Settings()

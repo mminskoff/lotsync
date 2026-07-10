@@ -1,19 +1,22 @@
 """Tests for Minew MQTT downlink and Jengine envelopes."""
 
 import base64
+import json
 
 import pytest
 
 from app.adapters.rendering.minew import MinewRenderer
 from app.adapters.transport.minew_jengine import (
     build_command_02_data,
+    build_jengine_image_set_req,
+    normalize_esl_mqtt_mac,
+    normalize_jengine_mac,
     normalize_mac,
     resolve_tag_mac,
 )
 from app.adapters.transport.minew_mqtt import MinewMqttTransport, build_mqtt_topic
 from app.adapters.transport.minew_mqtt_client import (
-    MinewMqttClient,
-    build_command_topic,
+    build_action_topic,
     build_ddata_payload,
 )
 from app.core.config import settings
@@ -46,6 +49,10 @@ def test_normalize_mac_strips_separators():
     assert normalize_mac("FC:23:3F:C2:B7:C2") == "FC233FC2B7C2"
 
 
+def test_normalize_jengine_mac_lowercases_screen_id():
+    assert normalize_jengine_mac("E100000A1525") == "e100000a1525"
+
+
 def test_resolve_tag_mac_from_metadata():
     mac = resolve_tag_mac(
         device_id="E100000A1525",
@@ -54,29 +61,46 @@ def test_resolve_tag_mac_from_metadata():
     assert mac == "AC233FA1B2C3"
 
 
-def test_resolve_tag_mac_rejects_device_id():
+def test_resolve_tag_mac_accepts_screen_id_for_json_prepared():
     assert (
         resolve_tag_mac(
             device_id="E100000A1525",
             metadata={"provider_device_id": "E100000A1525"},
         )
-        is None
+        == "E100000A1525"
     )
+
+
+def test_normalize_esl_mqtt_mac_accepts_screen_id():
+    assert normalize_esl_mqtt_mac("e100000a1525") == "E100000A1525"
 
 
 def test_build_command_02_data_prefixes_dimensions():
     pixels = bytes([0x55] * 8)
     encoded = build_command_02_data(pixels, width=400, height=300, encoding="command02_v1")
-    assert encoded.startswith("020190012C")  # 02 + 400 + 300 + pixels
+    assert encoded.startswith("020190012C")
     assert encoded.endswith(pixels.hex().upper())
 
 
-def test_build_command_topic_from_prefix(monkeypatch):
-    monkeypatch.setattr(settings, "gateway_mac", "FC233FC2B7C2")
+def test_build_jengine_image_set_req_shape():
+    payload = build_jengine_image_set_req(
+        tag_mac="e100000a1525",
+        image_data_b64="QUJD",
+        req_id=123,
+        opcode=45234,
+        img_id=21433,
+        device_key="1234567890123456",
+    )
+    assert payload["action"] == 2
+    assert payload["method"] == "set_req"
+    assert payload["payload"]["details"] == {"e100000a1525": {}}
+    assert payload["payload"]["images"][0]["compress"] == "NONE"
+
+
+def test_build_action_topic_default(monkeypatch):
+    monkeypatch.setattr(settings, "gateway_mac", "AC233FC267C2")
     monkeypatch.setattr(settings, "minew_mqtt_topic", "")
-    monkeypatch.setattr(settings, "minew_mqtt_topic_prefix", "Mqtt/GateWay")
-    monkeypatch.setattr(settings, "minew_mqtt_topic_suffix", "Command")
-    assert build_command_topic("FC233FC2B7C2") == "Mqtt/GateWay/FC233FC2B7C2/Command"
+    assert build_action_topic("AC233FC267C2") == "/gw/ac233fc267c2/action"
 
 
 def test_build_ddata_payload_shape():
@@ -91,10 +115,11 @@ def test_build_ddata_payload_shape():
     }
 
 
-def test_build_mqtt_topic_from_gateway_mac(monkeypatch):
-    monkeypatch.setattr(settings, "gateway_mac", "FC233FC2B7C2")
+def test_build_mqtt_topic_jengine_default(monkeypatch):
+    monkeypatch.setattr(settings, "gateway_mac", "AC233FC267C2")
     monkeypatch.setattr(settings, "minew_mqtt_topic", "")
-    assert build_mqtt_topic() == "Mqtt/GateWay/FC233FC2B7C2/Command"
+    monkeypatch.setattr(settings, "minew_mqtt_downlink_format", "jengine")
+    assert build_mqtt_topic() == "/gw/ac233fc267c2/action"
 
 
 def test_minew_transport_unconfigured_returns_clear_error(monkeypatch):
@@ -111,11 +136,12 @@ def test_minew_transport_unconfigured_returns_clear_error(monkeypatch):
     assert "MQTT_HOST" in (result.error or "")
 
 
-def test_minew_transport_requires_tag_mac(monkeypatch):
+def test_minew_transport_requires_device_key_in_jengine_mode(monkeypatch):
     monkeypatch.setattr(settings, "mqtt_host", "192.168.1.100")
-    monkeypatch.setattr(settings, "gateway_mac", "FC233FC2B7C2")
-    monkeypatch.setattr(settings, "esl_tag_mac", "")
-    monkeypatch.setattr(settings, "minew_mqtt_topic", "")
+    monkeypatch.setattr(settings, "gateway_mac", "AC233FC267C2")
+    monkeypatch.setattr(settings, "esl_tag_mac", "E100000A1525")
+    monkeypatch.setattr(settings, "minew_mqtt_downlink_format", "jengine")
+    monkeypatch.setattr(settings, "minew_jengine_device_key", "")
 
     transport = MinewMqttTransport()
     renderer = MinewRenderer()
@@ -123,50 +149,14 @@ def test_minew_transport_requires_tag_mac(monkeypatch):
 
     result = transport.push_label("E100000A1525", rendered)
     assert result.success is False
-    assert "BLE MAC" in (result.error or "")
+    assert "MINEW_JENGINE_DEVICE_KEY" in (result.error or "")
 
 
-def test_minew_transport_uses_esl_tag_mac_fallback(monkeypatch):
+def test_minew_transport_publishes_jengine_envelope(monkeypatch):
     monkeypatch.setattr(settings, "mqtt_host", "192.168.1.100")
-    monkeypatch.setattr(settings, "gateway_mac", "FC233FC2B7C2")
-    monkeypatch.setattr(settings, "esl_tag_mac", "AC233FA1B2C3")
-    monkeypatch.setattr(settings, "minew_mqtt_topic", "")
-
-    class FakeClient:
-        connected = True
-        subscribed = True
-
-        def connect(self) -> None:
-            return None
-
-        def subscribe_status(self, topic: str | None = None) -> str:
-            return "#"
-
-        def publish_display_update(self, gateway_mac, tag_mac, encoded_data, *, seq=None):
-            return {
-                "topic": f"Mqtt/GateWay/{gateway_mac}/Command",
-                "payload": {"mac": tag_mac, "data": encoded_data},
-                "seq": seq or 1,
-            }
-
-    monkeypatch.setattr(
-        "app.adapters.transport.minew_mqtt.get_minew_mqtt_client",
-        lambda: FakeClient(),
-    )
-
-    transport = MinewMqttTransport()
-    renderer = MinewRenderer()
-    rendered = renderer.render(_sample_payload(), _bwry_profile())
-
-    result = transport.push_label("E100000A1525", rendered)
-    assert result.success is True
-    assert result.provider_response["tag_mac"] == "AC233FA1B2C3"
-
-
-def test_minew_transport_builds_ddata_envelope(monkeypatch):
-    monkeypatch.setattr(settings, "mqtt_host", "192.168.1.100")
-    monkeypatch.setattr(settings, "gateway_mac", "FC233FC2B7C2")
-    monkeypatch.setattr(settings, "minew_mqtt_topic", "")
+    monkeypatch.setattr(settings, "gateway_mac", "AC233FC267C2")
+    monkeypatch.setattr(settings, "minew_mqtt_downlink_format", "jengine")
+    monkeypatch.setattr(settings, "minew_jengine_device_key", "1234567890123456")
 
     captured: dict = {}
 
@@ -180,14 +170,16 @@ def test_minew_transport_builds_ddata_envelope(monkeypatch):
         def subscribe_status(self, topic: str | None = None) -> str:
             return "#"
 
-        def publish_display_update(self, gateway_mac, tag_mac, encoded_data, *, seq=None):
+        def publish_label_update(self, gateway_mac, tag_mac, pixel_bytes, *, width, height, **kwargs):
             captured["gateway_mac"] = gateway_mac
             captured["tag_mac"] = tag_mac
-            captured["encoded_data"] = encoded_data
+            captured["pixel_len"] = len(pixel_bytes)
+            captured["width"] = width
+            captured["height"] = height
             return {
-                "topic": "Mqtt/GateWay/FC233FC2B7C2/Command",
-                "payload": {"mac": tag_mac, "data": encoded_data},
-                "seq": 3,
+                "topic": "/gw/ac233fc267c2/action",
+                "payload": {"action": 2},
+                "req_id": 9,
             }
 
     monkeypatch.setattr(
@@ -198,14 +190,13 @@ def test_minew_transport_builds_ddata_envelope(monkeypatch):
     transport = MinewMqttTransport()
     renderer = MinewRenderer()
     rendered = renderer.render(_sample_payload(), _bwry_profile())
-
     result = transport.push_label(
         "E100000A1525",
         rendered,
-        metadata={"tag_mac": "AC233FA1B2C3"},
+        metadata={"provider_device_id": "E100000A1525"},
     )
-
     assert result.success is True
-    assert captured["tag_mac"] == "AC233FA1B2C3"
-    assert captured["encoded_data"].startswith("020190012C")
-    assert result.provider_response["seq"] == 3
+    assert captured["tag_mac"] == "E100000A1525"
+    assert captured["width"] == 400
+    assert captured["height"] == 300
+    assert result.provider_response["req_id"] == 9

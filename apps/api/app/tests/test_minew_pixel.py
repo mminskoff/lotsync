@@ -14,8 +14,10 @@ from app.adapters.rendering.minew_pixel import (
     encode_bwry,
     encode_minew_pixels,
     expected_byte_length,
+    orient_image_for_panel,
 )
 from app.adapters.transport.minew_mqtt import MinewMqttTransport
+from app.core.config import settings
 from app.schemas.label import DeviceProfile, LabelPayload
 
 
@@ -58,6 +60,23 @@ def test_bwry_encodes_four_pixel_column():
     assert encoded == bytes([0x1E])
 
 
+def test_orient_panel_flip_after_rotation():
+    image = Image.new("RGB", (400, 300), BWRY_WHITE)
+    pixels = image.load()
+    assert pixels is not None
+    pixels[50, 40] = BWRY_BLACK
+    plain = orient_image_for_panel(image, -90)
+    flipped = orient_image_for_panel(image, -90, flip_horizontal=True)
+    assert plain.size == flipped.size == (300, 400)
+    assert plain != flipped
+
+
+def test_bwry_oriented_same_byte_length():
+    image = Image.new("RGB", (400, 300), BWRY_WHITE)
+    assert len(encode_minew_pixels(image, "BWRY", rotation=0)) == 30_000
+    assert len(encode_minew_pixels(image, "BWRY", rotation=90)) == 30_000
+
+
 def test_bwry_solid_white_tile():
     image = Image.new("RGB", (4, 4), BWRY_WHITE)
     encoded = encode_bwry(image)
@@ -75,7 +94,10 @@ def test_minew_renderer_outputs_pixel_buffer():
     assert len(raw) == 30_000
 
 
-def test_minew_transport_unconfigured_returns_clear_error():
+def test_minew_transport_unconfigured_returns_clear_error(monkeypatch):
+    monkeypatch.setattr(settings, "mqtt_host", "")
+    monkeypatch.setattr(settings, "gateway_mac", "")
+    monkeypatch.setattr(settings, "minew_mqtt_topic", "")
     transport = MinewMqttTransport()
     renderer = MinewRenderer()
     rendered = renderer.render(_sample_payload(), _bwry_profile())

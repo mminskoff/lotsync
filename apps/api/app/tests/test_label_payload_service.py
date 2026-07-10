@@ -13,6 +13,7 @@ from app.services.label_payload_service import (
     build_sync_label,
     format_mileage,
     format_price,
+    resolve_label_qr_url,
 )
 
 
@@ -65,6 +66,39 @@ def test_format_price_missing():
 def test_format_mileage():
     assert format_mileage(1200) == "1,200"
     assert format_mileage(None) is None
+
+
+def test_resolve_label_qr_url_prefers_vehicle_url():
+    assert (
+        resolve_label_qr_url(
+            vin="1HGBH41JXMN109186",
+            vehicle_url="https://dealer.example.com/vdp",
+        )
+        == "https://dealer.example.com/vdp"
+    )
+
+
+def test_resolve_label_qr_url_none_without_fallback(monkeypatch):
+    monkeypatch.setattr("app.services.label_payload_service.settings.label_qr_fallback_url", "")
+    assert resolve_label_qr_url(vin="1HGBH41JXMN109186") is None
+
+
+def test_resolve_label_qr_url_fallback_template(monkeypatch):
+    monkeypatch.setattr(
+        "app.services.label_payload_service.settings.label_qr_fallback_url",
+        "https://dealer.example.com/v/{vin}",
+    )
+    assert (
+        resolve_label_qr_url(vin="1HGBH41JXMN109186")
+        == "https://dealer.example.com/v/1HGBH41JXMN109186"
+    )
+
+
+def test_build_label_payload_without_url_has_no_qr(monkeypatch):
+    monkeypatch.setattr("app.services.label_payload_service.settings.label_qr_fallback_url", "")
+    vehicle = _vehicle(vehicle_url=None)
+    payload = build_label_payload(vehicle)
+    assert payload.qr_url is None
 
 
 def test_build_label_payload_from_vehicle():

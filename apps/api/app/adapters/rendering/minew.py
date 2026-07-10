@@ -7,7 +7,12 @@ import logging
 
 from app.adapters.rendering.base import RendererAdapter
 from app.adapters.rendering.label_layouts import render_label
-from app.adapters.rendering.minew_pixel import encode_minew_pixels, infer_minew_color_mode
+from app.adapters.rendering.minew_pixel import (
+    encode_minew_pixels,
+    infer_minew_color_mode,
+    infer_minew_panel_flip_horizontal,
+    infer_minew_panel_rotation,
+)
 from app.schemas.label import DeviceProfile, LabelPayload, RenderedLabel
 
 logger = logging.getLogger(__name__)
@@ -35,7 +40,14 @@ class MinewRenderer(RendererAdapter):
         if image.size != (width, height):
             image = image.resize((width, height))
 
-        pixel_bytes = encode_minew_pixels(image, color_mode)
+        rotation = infer_minew_panel_rotation(device_profile.model)
+        flip_horizontal = infer_minew_panel_flip_horizontal(device_profile.model)
+        pixel_bytes = encode_minew_pixels(
+            image,
+            color_mode,
+            rotation=rotation,
+            flip_horizontal=flip_horizontal,
+        )
         encoding = color_mode.lower().replace("-", "")
 
         logger.info(

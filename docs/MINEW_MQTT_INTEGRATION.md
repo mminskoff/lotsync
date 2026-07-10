@@ -3,104 +3,150 @@
 LotSync pushes label updates to Minew ESL tags **through the gateway** — never direct to tags.
 
 ```
-Inventory → Renderer → Pixel encoder → Jengine 02 → MQTT dData → G1-E → BLE → Tag
+Inventory → Renderer → Pixel encoder → Jengine 02 → MQTT /gw/.../action → G1-E → BLE → Tag
 ```
 
-## Gateway (kit)
+Reference docs (Minew NDA, v3.7+): `minew-gateway-interface@en-overview.pdf`, `en-adv.pdf`, `en-jengine.pdf`, `en-extcmd-grapes.pdf`.
+
+## Gateway (Dover pilot kit)
 
 | Field | Value |
 |---|---|
-| Model | G1-E B6121 |
-| WiFi MAC | `FC:23:3F:C2:B7:C2` → topic MAC `FC233FC2B7C2` |
-| Default IP | `192.168.99.1` (confirm on LAN) |
+| Model | G1-E B6121 (g1-e-grapes firmware) |
+| Label WiFi MAC | `FC:23:3F:C2:B7:C2` |
+| **MQTT client ID / topics MAC** | `ac233fc267c2` → `AC233FC267C2` |
+| Admin UI | `http://192.168.99.1` |
+| Cloud broker | `ssl://hub.minewtag.com:9883` |
+| Local broker (dev) | `tcp://<laptop-ip>:1883` |
 
-## MQTT downlink (first implementation target)
+## MQTT topics (jengine — default)
 
-**Topic:**
+| Direction | Topic |
+|---|---|
+| Uplink (BLE adverts) | `/gw/ac233fc267c2/status` |
+| Downlink (commands) | `/gw/ac233fc267c2/action` |
+| Downlink responses | `/gw/ac233fc267c2/response` |
+| Extension commands | `/gw/ac233fc267c2/action/cgic-*` |
 
-```
-Mqtt/GateWay/<GATEWAY_MAC>/Command
-```
+Legacy `Mqtt/GateWay/{MAC}/Command` + `dData` is **not** used by grapes / JSON-PREPARSED gateways. Keep `MINEW_MQTT_DOWNLINK_FORMAT=ddata` only if Minew support confirms that path.
 
-Example:
+## Downlink envelope (jengine command 02)
 
-```
-Mqtt/GateWay/FC233FC2B7C2/Command
-```
-
-**Payload:**
+Publish JSON to the **action** topic:
 
 ```json
 {
-  "msg": "dData",
-  "mac": "<ESL_TAG_BLE_MAC>",
-  "seq": 1,
-  "auth1": "00000000",
-  "dType": "ascii",
-  "data": "<JENGINE_COMMAND_02_AS_HEX>"
+  "action": 2,
+  "version": 1,
+  "method": "set_req",
+  "req_id": 123,
+  "payload": {
+    "key": "<16_DIGIT_DEVICE_KEY>",
+    "opcode": 45234,
+    "single": true,
+    "img_id": 21433,
+    "images": [{
+      "data": "<base64 ESL pixel buffer>",
+      "screen": ["A"],
+      "compress": "NONE",
+      "refresh": true
+    }],
+    "details": {
+      "e100000a1525": {}
+    }
+  }
 }
 ```
 
-| Field | LotSync source |
+| Field | Notes |
 |---|---|
-| `mac` | `ESL_TAG_MAC` env, `esl_devices.provider_device_id`, or `metadata.tag_mac` |
-| `data` | Jengine command **02** + width/height + BWRY pixel buffer (hex ASCII) |
-| `seq` | Auto-incrementing per worker process |
+| `action` | `2` = image refresh |
+| `method` | `set_req` |
+| `payload.key` | 16-char BLE device key — **from Minew, not a placeholder** |
+| `payload.details.{mac}` | Tag id **lowercase**, no colons (screen ID or BLE MAC — confirm with Minew) |
+| `opcode` / `img_id` | New values each push; match `ds` uplink when refresh succeeds |
+| `images.compress` | `NONE` or Minew-specific `RLE` |
+| `images.data` | Base64 of ESL-native pixel buffer — **not PNG/JPG** |
 
-## Environment (worker + API when testing transport)
+Subscribe to **response** for stage-1 ack (`method: set_rsp`, `payload.code`). Confirm physical refresh via `ds` adverts on **status** (`img_id`, `opcode`, `error: 0`).
+
+## Uplink (JSON-PREPARSED)
+
+Self-hosted monitoring uses JSON-PREPARSED on `/gw/{mac}/status`:
+
+```json
+{
+  "gw": "ac233fc267c2",
+  "adv": [{
+    "type": "ds",
+    "mac": "e100000a1525",
+    "img_id": 1782006065,
+    "opcode": 1782006065,
+    "error": 0,
+    "single": true,
+    "rssi": -70
+  }]
+}
+```
+
+**Minew cloud** expects gateway uplink format **MINEW-CONNECT**, not JSON-PREPARSED. Use one format per broker:
+
+| Broker | Data format |
+|---|---|
+| `hub.minewtag.com` (cloud) | **MINEW-CONNECT** |
+| Local Mosquitto (LotSync) | **JSON-PREPARSED** |
+
+## Environment
 
 ```env
 RENDERER_ADAPTER=minew
 TRANSPORT_ADAPTER=minew_mqtt
-MQTT_HOST=192.168.99.1
+
+MQTT_HOST=192.168.99.121
 MQTT_PORT=1883
-MQTT_USERNAME=
-MQTT_PASSWORD=
-GATEWAY_MAC=FC233FC2B7C2
-ESL_TAG_MAC=<pilot_tag_ble_mac>
-MINEW_JENGINE_COMMAND=02
+GATEWAY_MAC=AC233FC267C2
+ESL_TAG_MAC=e100000a1525
+
+MINEW_MQTT_TOPIC=/gw/ac233fc267c2/action
+MINEW_MQTT_SUBSCRIBE_TOPIC=/gw/ac233fc267c2/#
+MINEW_MQTT_DOWNLINK_FORMAT=jengine
+MINEW_JENGINE_DEVICE_KEY=<16-char key from Minew>
+MINEW_JENGINE_SINGLE_FIRMWARE=true
+MINEW_JENGINE_SCREEN=A
+MINEW_JENGINE_COMPRESS=NONE
+```
+
+Optional legacy downlink:
+
+```env
+MINEW_MQTT_DOWNLINK_FORMAT=ddata
+MINEW_MQTT_TOPIC_PREFIX=Mqtt/GateWay
+MINEW_MQTT_TOPIC_SUFFIX=Command
 MINEW_JENGINE_DATA_ENCODING=command02_v1
 ```
 
-(`MINEW_MQTT_HOST` / `MINEW_GATEWAY_MAC` aliases still work.)
-
-Optional overrides:
-
-| Variable | Default | Notes |
-|---|---|---|
-| `MINEW_MQTT_TOPIC` | auto from `GATEWAY_MAC` | Full topic override |
-| `MINEW_MQTT_MSG_TYPE` | `dData` | Downlink message type |
-| `MINEW_MQTT_AUTH1` | `00000000` | Payload auth field |
-| `MINEW_MQTT_DTYPE` | `ascii` | Hex string in `data` |
-| `MINEW_JENGINE_DATA_ENCODING` | `command02_v1` | `raw_hex` if gateway expects pixels only |
-
-## Tag IDs vs BLE MAC
+## Tag IDs
 
 | ID | Example | Used for |
 |---|---|---|
-| Barcode / screen ID | `E100000A1525` | Pairing scan, `esl_devices.device_id` |
-| BLE MAC | `AC233FA1B2C3` | MQTT `mac` field — **required for push** |
+| Barcode / screen ID | `E100000A1525` | Pairing scan, `esl_devices.device_id`, likely jengine `details` key |
+| BLE MAC | `AC233FA1B2C3` | Alternate if Minew confirms |
 
-Discover tag MAC from gateway status/uplink MQTT or Minew tools, then update:
-
-```sql
-UPDATE esl_devices
-SET provider_device_id = '<TAG_BLE_MAC>'
-WHERE device_id = 'E100000A1525';
-```
+Pilot kit uplink uses screen id `e100000a1525` in `ds` packets.
 
 ## Firmware scope
 
-**Single (BLE) firmware only** — commands `02`, `42`, `102`, `103`. Ignore MIX/standard commands `03`, `20`, `33`, `37`, `101`.
+**BLE (single) firmware only** — jengine commands `02`, `42`, `102`, `103`. Ignore MIX/standard commands `03`, `20`, `33`, `37`, `101`.
 
 ## Validation checklist
 
-- [ ] Gateway on LAN; MQTT broker reachable at `MINEW_MQTT_HOST`
-- [ ] `GET /health` shows `minew_mqtt_configured: true`
-- [ ] Tag BLE MAC stored on `E100000A1525`
-- [ ] Pair vehicle → process sync → MQTT publish logged
-- [ ] Physical tag updates within target window
-- [ ] If no update: try `MINEW_JENGINE_DATA_ENCODING=raw_hex` or confirm Jengine 02 frame with Minew
+- [ ] Gateway online; broker reachable at `MQTT_HOST`
+- [ ] `MINEW_JENGINE_DEVICE_KEY` set (16 chars)
+- [ ] `GET /health` → `minew_mqtt_configured: true`
+- [ ] Tag id on `E100000A1525` (`e100000a1525`)
+- [ ] Publish test → `set_rsp` on response topic
+- [ ] `ds` uplink shows new `img_id` + `error: 0`
+- [ ] Physical tag updates
 
 ## API endpoints
 
@@ -108,33 +154,27 @@ WHERE device_id = 'E100000A1525';
 |---|---|---|
 | `POST` | `/api/v1/vehicles/{id}/render-label` | Render + encode; saves job artifacts |
 | `POST` | `/api/v1/vehicles/{id}/send-to-esl` | Render + MQTT publish for paired vehicle |
-| `POST` | `/api/v1/esl/test-update` | 800×480 TEST UPDATE image + MQTT publish |
+| `POST` | `/api/v1/esl/test-update` | Test image + MQTT publish |
 | `GET` | `/api/v1/esl/status` | MQTT connection + recent jobs + gateway messages |
 
 ## CLI test script
 
 ```bash
 cd apps/api
-PYTHONPATH=. .venv/bin/python scripts/test_minew_update.py \\
-  --gateway FC233FC2B7C2 --tag <TAG_BLE_MAC>
+PYTHONPATH=. .venv/bin/python scripts/test_minew_update.py \
+  --gateway AC233FC267C2 --tag e100000a1525 \
+  --width 400 --height 300 --color-mode BWRY
 ```
-
-## Job tracking
-
-Table `esl_update_jobs` stores image path, encoded MQTT data path, seq, status, and gateway response. Migration: `apps/api/migrations/20260708_esl_update_jobs.sql`.
-
-Existing `esl_devices` maps to **esl_tags** (MAC in `provider_device_id`, barcode ID in `device_id`). Existing `vehicles` table unchanged.
 
 ## Code
 
 | Piece | Path |
 |---|---|
 | Jengine envelope | `app/adapters/transport/minew_jengine.py` |
-| MQTT transport | `app/adapters/transport/minew_mqtt.py` |
-| Pixel format | `docs/MINEW_PIXEL_FORMAT.md` |
+| MQTT client | `app/adapters/transport/minew_mqtt_client.py` |
+| Transport adapter | `app/adapters/transport/minew_mqtt.py` |
+| Pixel format (hypothesis) | `docs/MINEW_PIXEL_FORMAT.md` |
 
-## Open / hypothesis
+## Open questions for Minew
 
-- Exact Jengine 02 byte layout inside `data` (current: `02` + BE width + BE height + pixels)
-- Uplink topic for acks / tag online status
-- Gateway MQTT credentials if broker requires auth
+See `docs/MINEW_OPEN_QUESTIONS.md`.

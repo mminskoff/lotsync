@@ -14,12 +14,13 @@ from sqlalchemy.orm import Session
 from app.adapters.rendering.label_fonts import load_font
 from app.adapters.rendering.label_layouts import render_label
 from app.adapters.rendering.minew import MinewRenderer, resolve_minew_color_mode
-from app.adapters.rendering.minew_pixel import encode_minew_pixels
+from app.adapters.rendering.minew_pixel import encode_minew_pixels, infer_minew_panel_flip_horizontal, infer_minew_panel_rotation
 from app.adapters.transport.minew_jengine import (
-    build_command_02_data,
+    normalize_esl_mqtt_mac,
     normalize_mac,
     resolve_tag_mac,
 )
+from app.adapters.transport.minew_mqtt import build_mqtt_artifact
 from app.adapters.transport.minew_mqtt_client import get_minew_mqtt_client
 from app.core.config import settings
 from app.models.esl_device import ESLDevice
@@ -46,13 +47,8 @@ def _job_dir(job_id: uuid.UUID) -> Path:
     return path
 
 
-def _encode_for_mqtt(pixel_bytes: bytes, *, width: int, height: int) -> str:
-    return build_command_02_data(
-        pixel_bytes,
-        width=width,
-        height=height,
-        encoding=settings.minew_jengine_data_encoding,
-    )
+def _encode_for_mqtt(pixel_bytes: bytes, *, width: int, height: int, tag_mac: str) -> str:
+    return build_mqtt_artifact(pixel_bytes, width=width, height=height, tag_mac=tag_mac)
 
 
 def render_test_image(
@@ -165,8 +161,15 @@ def render_vehicle_label(
         image = image.resize((profile.width, profile.height))
 
     color_mode = resolve_minew_color_mode(profile)
-    pixel_bytes = encode_minew_pixels(image, color_mode)
-    encoded_data = _encode_for_mqtt(pixel_bytes, width=profile.width, height=profile.height)
+    rotation = infer_minew_panel_rotation(profile.model)
+    flip_horizontal = infer_minew_panel_flip_horizontal(profile.model)
+    pixel_bytes = encode_minew_pixels(
+        image, color_mode, rotation=rotation, flip_horizontal=flip_horizontal
+    )
+    tag_mac = _resolve_tag_mac_for_device(device)
+    encoded_data = _encode_for_mqtt(
+        pixel_bytes, width=profile.width, height=profile.height, tag_mac=tag_mac
+    )
 
     job_id = None
     image_path = None
@@ -229,8 +232,14 @@ def send_vehicle_to_esl(
         image = image.resize((profile.width, profile.height))
 
     color_mode = resolve_minew_color_mode(profile)
-    pixel_bytes = encode_minew_pixels(image, color_mode)
-    encoded_data = _encode_for_mqtt(pixel_bytes, width=profile.width, height=profile.height)
+    rotation = infer_minew_panel_rotation(profile.model)
+    flip_horizontal = infer_minew_panel_flip_horizontal(profile.model)
+    pixel_bytes = encode_minew_pixels(
+        image, color_mode, rotation=rotation, flip_horizontal=flip_horizontal
+    )
+    encoded_data = _encode_for_mqtt(
+        pixel_bytes, width=profile.width, height=profile.height, tag_mac=tag_mac
+    )
 
     job = _create_job(
         db,
@@ -246,10 +255,16 @@ def send_vehicle_to_esl(
     client.connect()
     client.subscribe_status()
     try:
-        result = client.publish_display_update(gateway_mac, tag_mac, encoded_data)
+        result = client.publish_label_update(
+            gateway_mac,
+            tag_mac,
+            pixel_bytes,
+            width=profile.width,
+            height=profile.height,
+        )
         job.status = "sent"
         job.sent_at = datetime.now(UTC)
-        job.seq = int(result["seq"])
+        job.seq = int(result.get("seq") or result.get("req_id") or 0)
         job.gateway_response = result
         job.completed_at = datetime.now(UTC)
         db.commit()
@@ -266,7 +281,7 @@ def send_vehicle_to_esl(
         tag_mac=tag_mac,
         gateway_mac=gateway_mac,
         topic=str(result["topic"]),
-        seq=int(result["seq"]),
+        seq=int(result.get("seq") or result.get("req_id") or 0),
         pixel_byte_length=len(pixel_bytes),
         encoded_data_length=len(encoded_data),
     )
@@ -278,21 +293,27 @@ def run_test_update(
     body: TestUpdateRequest,
 ) -> TestUpdateResponse:
     gateway_mac = _resolve_gateway_mac(body.gateway_mac)
-    tag_mac = normalize_mac(body.tag_mac or settings.esl_tag_mac)
+    tag_mac = normalize_esl_mqtt_mac(body.tag_mac or settings.esl_tag_mac)
     if not tag_mac:
         raise ValueError("ESL_TAG_MAC or tag_mac is required for test update")
 
     profile = DeviceProfile(
         provider="minew",
-        model=f"test-{body.color_mode}",
+        model=f"4.2-{body.color_mode}" if body.width == 400 and body.height == 300 else f"test-{body.color_mode}",
         width=body.width,
         height=body.height,
         color_mode=body.color_mode,
     )
     image = render_test_image(width=body.width, height=body.height, price=body.price)
     color_mode = resolve_minew_color_mode(profile)
-    pixel_bytes = encode_minew_pixels(image, color_mode)
-    encoded_data = _encode_for_mqtt(pixel_bytes, width=body.width, height=body.height)
+    rotation = infer_minew_panel_rotation(profile.model)
+    flip_horizontal = infer_minew_panel_flip_horizontal(profile.model)
+    pixel_bytes = encode_minew_pixels(
+        image, color_mode, rotation=rotation, flip_horizontal=flip_horizontal
+    )
+    encoded_data = _encode_for_mqtt(
+        pixel_bytes, width=body.width, height=body.height, tag_mac=tag_mac
+    )
 
     job = _create_job(
         db,
@@ -307,10 +328,16 @@ def run_test_update(
     if body.subscribe:
         client.subscribe_status()
 
-    result = client.publish_display_update(gateway_mac, tag_mac, encoded_data)
+    result = client.publish_label_update(
+        gateway_mac,
+        tag_mac,
+        pixel_bytes,
+        width=body.width,
+        height=body.height,
+    )
     job.status = "sent"
     job.sent_at = datetime.now(UTC)
-    job.seq = int(result["seq"])
+    job.seq = int(result.get("seq") or result.get("req_id") or 0)
     job.gateway_response = result
     job.completed_at = datetime.now(UTC)
     db.commit()
@@ -321,7 +348,7 @@ def run_test_update(
         tag_mac=tag_mac,
         gateway_mac=gateway_mac,
         topic=str(result["topic"]),
-        seq=int(result["seq"]),
+        seq=int(result.get("seq") or result.get("req_id") or 0),
         color_mode=color_mode,
         width=body.width,
         height=body.height,

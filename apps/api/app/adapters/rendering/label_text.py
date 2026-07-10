@@ -12,6 +12,7 @@ GRAY = (130, 130, 130)
 LIGHT_GRAY = (175, 175, 175)
 GREEN = (45, 110, 70)
 RED = (185, 55, 50)
+YELLOW = (255, 255, 0)  # BWRY-native accent (Minew exact RGB)
 FADED = (195, 195, 195)
 
 

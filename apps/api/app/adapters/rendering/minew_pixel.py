@@ -48,6 +48,27 @@ def infer_minew_color_mode(model: str | None) -> MinewColorMode | None:
     return None
 
 
+def infer_minew_panel_rotation(model: str | None) -> int:
+    """Panel rotation in degrees (PIL CCW). BWRY 4.2\" pilot: -90°."""
+    rotation, _ = resolve_panel_orientation(model)
+    return rotation
+
+
+def infer_minew_panel_flip_horizontal(model: str | None) -> bool:
+    """Whether to mirror horizontally after rotation (4.2\" BWRY pilot)."""
+    _, flip = resolve_panel_orientation(model)
+    return flip
+
+
+def resolve_panel_orientation(model: str | None) -> tuple[int, bool]:
+    if not model:
+        return 0, False
+    upper = model.upper()
+    if "4.2" in upper and "BWRY" in upper:
+        return -90, True
+    return 0, False
+
+
 def _nearest_color(rgb: tuple[int, int, int], palette: dict[tuple[int, int, int], int]) -> int:
     best_key = min(
         palette,
@@ -73,6 +94,39 @@ def quantize_image(image: Image.Image, palette: dict[tuple[int, int, int], int])
     return out
 
 
+def _pack_bwry_column(
+    pixels,
+    *,
+    width: int,
+    height: int,
+    x: int,
+    y0: int,
+) -> int:
+    nibbles = []
+    for offset in range(4):
+        row = y0 + offset
+        if row < height:
+            nibbles.append(_nearest_color(pixels[x, row], BWRY_CODES))
+        else:
+            nibbles.append(BWRY_CODES[BWRY_WHITE])
+    return (nibbles[0] << 6) | (nibbles[1] << 4) | (nibbles[2] << 2) | nibbles[3]
+
+
+def orient_image_for_panel(
+    image: Image.Image,
+    rotation: int,
+    *,
+    flip_horizontal: bool = False,
+) -> Image.Image:
+    """Rotate (and optionally mirror) label art for physical panel mounting."""
+    out = image
+    if rotation % 360 != 0:
+        out = out.rotate(rotation, expand=True, fillcolor=BWRY_WHITE)
+    if flip_horizontal:
+        out = out.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+    return out
+
+
 def encode_bwry(image: Image.Image) -> bytes:
     """Encode a 4-color BWRY panel. Four pixels per byte, outer x / inner y."""
     img = quantize_image(image, BWRY_CODES)
@@ -85,15 +139,10 @@ def encode_bwry(image: Image.Image) -> bytes:
     out = bytearray()
     for x in range(width):
         for y in range(0, padded_height, 4):
-            nibbles = []
-            for offset in range(4):
-                row = y + offset
-                if row < height:
-                    nibbles.append(_nearest_color(pixels[x, row], BWRY_CODES))
-                else:
-                    nibbles.append(BWRY_CODES[BWRY_WHITE])
             out.append(
-                (nibbles[0] << 6) | (nibbles[1] << 4) | (nibbles[2] << 2) | nibbles[3]
+                _pack_bwry_column(
+                    pixels, width=width, height=height, x=x, y0=y
+                )
             )
     return bytes(out)
 
@@ -161,10 +210,19 @@ def _pack_bits_msb(bits: list[int]) -> bytes:
     return bytes(out)
 
 
-def encode_minew_pixels(image: Image.Image, color_mode: str) -> bytes:
+def encode_minew_pixels(
+    image: Image.Image,
+    color_mode: str,
+    *,
+    rotation: int = 0,
+    flip_horizontal: bool = False,
+) -> bytes:
+    oriented = orient_image_for_panel(
+        image, rotation, flip_horizontal=flip_horizontal
+    )
     mode = color_mode.upper()
     if mode == "BWRY":
-        return encode_bwry(image)
+        return encode_bwry(oriented)
     if mode == "BWR":
         return encode_bwr(image)
     if mode in {"E6", "6COLOR", "6-COLOR"}:
